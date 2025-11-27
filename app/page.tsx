@@ -67,7 +67,7 @@ export default function Home() {
         /* Configurator State - Sidebar + Viewer layout */
         <div className="relative h-full">
           {/* Absolutely positioned Configurator Sidebar */}
-          <div className="absolute left-0 top-8 z-10">
+          <div className="absolute left-0 top-4 z-10">
             <ConfiguratorSidebar
               fileName={selectedFile.name}
               modelInfo={modelInfo}
