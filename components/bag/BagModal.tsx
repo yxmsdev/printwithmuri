@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useBagStore } from '@/stores/useBagStore';
 
 interface BagModalProps {
@@ -8,6 +8,7 @@ interface BagModalProps {
 }
 
 export default function BagModal({ onClose }: BagModalProps) {
+  const router = useRouter();
   const items = useBagStore((state) => state.items);
   const removeItem = useBagStore((state) => state.removeItem);
   const updateQuantity = useBagStore((state) => state.updateQuantity);
@@ -29,7 +30,7 @@ export default function BagModal({ onClose }: BagModalProps) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="w-20 h-20 bg-[#F5F5F5] rounded-full flex items-center justify-center mb-4">
+        <div className="w-20 h-20 bg-[#EDEDED] rounded-full flex items-center justify-center mb-4">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
             <line x1="3" y1="6" x2="21" y2="6" />
@@ -68,7 +69,7 @@ export default function BagModal({ onClose }: BagModalProps) {
               className="flex gap-4 pb-4 border-b border-[#E6E6E6]"
             >
               {/* Model Preview Placeholder */}
-              <div className="w-[80px] h-[80px] bg-[#F5F5F5] rounded flex items-center justify-center flex-shrink-0">
+              <div className="w-[80px] h-[80px] bg-[#EDEDED] rounded flex items-center justify-center flex-shrink-0">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
                   <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
                   <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -168,6 +169,10 @@ export default function BagModal({ onClose }: BagModalProps) {
         </div>
 
         <button
+          onClick={() => {
+            onClose();
+            router.push('/checkout');
+          }}
           className="w-full py-3 text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'

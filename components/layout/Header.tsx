@@ -2,15 +2,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import ComingSoonContent from '@/components/layout/ComingSoonContent';
 import BagModal from '@/components/bag/BagModal';
 import { useBagStore } from '@/stores/useBagStore';
+import { useDraftsStore } from '@/stores/useDraftsStore';
 
 const Header = () => {
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [comingSoonType, setComingSoonType] = useState<'paper' | 'merch'>('paper');
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   
   // Get bag state from store
   const bagItems = useBagStore((state) => state.items);
@@ -19,13 +22,26 @@ const Header = () => {
   const closeBag = useBagStore((state) => state.closeBag);
   const bagCount = bagItems.reduce((total, item) => total + item.config.quantity, 0);
 
+  // Get drafts count
+  const drafts = useDraftsStore((state) => state.drafts);
+  const draftCount = drafts.length;
+
+  // Close account menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setShowAccountMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleOpenComingSoon = (type: 'paper' | 'merch') => {
     setComingSoonType(type);
     setShowComingSoon(true);
   };
-
-  // Placeholder count for drafts - will be connected to actual store later
-  const draftCount = 0;
 
   return (
     <>
@@ -83,14 +99,75 @@ const Header = () => {
               </button>
             </div>
             
-            <button className="w-6 h-6 hover:opacity-80 transition-opacity">
-              <Image
-                src="/images/account-icon.svg"
-                alt="Account"
-                width={24}
-                height={24}
-              />
-            </button>
+            {/* Account Button with Dropdown */}
+            <div className="relative" ref={accountMenuRef}>
+              <button 
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="w-8 h-8 hover:opacity-80 transition-opacity"
+              >
+                <Image
+                  src="/images/account-icon.svg"
+                  alt="Account"
+                  width={32}
+                  height={32}
+                />
+              </button>
+
+              {/* Account Dropdown Menu */}
+              {showAccountMenu && (
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-[4px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[160px]">
+                  {/* User Info */}
+                  <div className="px-6 py-2 border-b border-[#B7B7B7]/50">
+                    <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none">
+                      Guest User
+                    </p>
+                    <p className="text-[10px] text-[#F4008A] text-center leading-[1.37] mt-1">
+                      Sign in to save
+                    </p>
+                  </div>
+
+                  {/* My Orders */}
+                  <Link
+                    href="/orders"
+                    onClick={() => setShowAccountMenu(false)}
+                    className="block w-full px-3 py-2 rounded-[2px] text-[13px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
+                  >
+                    My Orders
+                  </Link>
+
+                  {/* Edit Profile */}
+                  <button
+                    onClick={() => {
+                      setShowAccountMenu(false);
+                      alert('Edit Profile coming soon!');
+                    }}
+                    className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+
+                  {/* Support */}
+                  <Link
+                    href="/support"
+                    onClick={() => setShowAccountMenu(false)}
+                    className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                  >
+                    Support
+                  </Link>
+
+                  {/* Log Out / Sign In */}
+                  <button
+                    onClick={() => {
+                      setShowAccountMenu(false);
+                      alert('Login coming soon!');
+                    }}
+                    className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

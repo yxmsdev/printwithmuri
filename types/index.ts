@@ -96,3 +96,22 @@ export interface UserProfile {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Draft Types
+export interface Draft {
+  id: string;
+  modelName: string;
+  modelFileUrl?: string; // For future: store file in cloud
+  modelInfo: ModelInfo | null;
+  config: {
+    quantity: number;
+    quality: string;
+    material: string;
+    color: string;
+    infillType: string;
+    infillDensity: number;
+    instructions: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}

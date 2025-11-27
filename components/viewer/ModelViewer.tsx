@@ -67,7 +67,7 @@ export default function ModelViewer({
   const hasModel = Boolean(fileUrl && fileUrl !== '');
 
   return (
-    <div className="relative w-full h-full min-h-[500px] bg-[#F5F5F5]">
+    <div className="relative w-full h-full min-h-[500px] bg-[#EDEDED]">
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[20, 4, 25]} />
 

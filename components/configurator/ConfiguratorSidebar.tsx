@@ -1,9 +1,23 @@
 'use client';
 
 import { ModelInfo } from '@/types';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import Image from 'next/image';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
+
+export interface ConfigState {
+  quantity: number;
+  quality: string;
+  material: string;
+  color: string;
+  infillType: string;
+  infillDensity: number;
+  instructions: string;
+}
+
+export interface ConfiguratorSidebarRef {
+  getConfig: () => ConfigState;
+}
 
 interface ConfiguratorSidebarProps {
   fileName: string;
@@ -11,28 +25,45 @@ interface ConfiguratorSidebarProps {
   onChangeFile: (file: File) => void;
   onAddToBag: () => void;
   onSaveAsDraft: () => void;
+  initialConfig?: Partial<ConfigState>;
 }
 
-export default function ConfiguratorSidebar({
+const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSidebarProps>(({
   fileName,
   modelInfo,
   onChangeFile,
   onAddToBag,
   onSaveAsDraft,
-}: ConfiguratorSidebarProps) {
-  const [quantity, setQuantity] = useState(1);
-  const [quality, setQuality] = useState('Standard');
-  const [material, setMaterial] = useState('PLA');
-  const [selectedColor, setSelectedColor] = useState({ name: 'Blue', value: '#2842AD' });
+  initialConfig,
+}, ref) => {
+  const [quantity, setQuantity] = useState(initialConfig?.quantity ?? 1);
+  const [quality, setQuality] = useState(initialConfig?.quality ?? 'Standard');
+  const [material, setMaterial] = useState(initialConfig?.material ?? 'PLA');
+  
+  const colors = [
+    { name: 'Blue', value: '#2842AD' },
+    { name: 'Pink', value: '#F4008A' },
+    { name: 'Black', value: '#000000' },
+    { name: 'White', value: '#FFFFFF' },
+    { name: 'Red', value: '#FF0000' },
+    { name: 'Green', value: '#00FF00' },
+    { name: 'Yellow', value: '#FFD913' },
+  ];
+  
+  const initialColor = initialConfig?.color 
+    ? colors.find(c => c.value === initialConfig.color) || colors[0]
+    : colors[0];
+  
+  const [selectedColor, setSelectedColor] = useState(initialColor);
   const [infillExpanded, setInfillExpanded] = useState(false);
-  const [infillType, setInfillType] = useState('Hexagonal');
-  const [infillDensity, setInfillDensity] = useState(25);
+  const [infillType, setInfillType] = useState(initialConfig?.infillType ?? 'Hexagonal');
+  const [infillDensity, setInfillDensity] = useState(initialConfig?.infillDensity ?? 25);
   const [isSliderDragging, setIsSliderDragging] = useState(false);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [isDraggingRef, setIsDraggingRef] = useState(false);
-  const [instructionsExpanded, setInstructionsExpanded] = useState(false);
-  const [instructions, setInstructions] = useState('');
+  const [instructionsExpanded, setInstructionsExpanded] = useState(initialConfig?.instructions ? true : false);
+  const [instructions, setInstructions] = useState(initialConfig?.instructions ?? '');
   const [addedToBag, setAddedToBag] = useState(false);
   const [hasChanges, setHasChanges] = useState(true); // Track if user has made changes since last add
   const [dimensionUnit, setDimensionUnit] = useState<'mm' | 'cm' | 'in'>('mm');
@@ -41,6 +72,19 @@ export default function ConfiguratorSidebar({
   
   const addItem = useBagStore((state) => state.addItem);
   const openBag = useBagStore((state) => state.openBag);
+
+  // Expose getConfig method via ref
+  useImperativeHandle(ref, () => ({
+    getConfig: () => ({
+      quantity,
+      quality,
+      material,
+      color: selectedColor.value,
+      infillType,
+      infillDensity,
+      instructions,
+    }),
+  }));
 
   // Convert dimensions based on selected unit
   const convertDimension = (mmValue: number): string => {
@@ -53,16 +97,6 @@ export default function ConfiguratorSidebar({
         return mmValue.toFixed(0);
     }
   };
-
-  const colors = [
-    { name: 'Blue', value: '#2842AD' },
-    { name: 'Pink', value: '#F4008A' },
-    { name: 'Black', value: '#000000' },
-    { name: 'White', value: '#FFFFFF' },
-    { name: 'Red', value: '#FF0000' },
-    { name: 'Green', value: '#00FF00' },
-    { name: 'Yellow', value: '#FFD913' },
-  ];
 
   // Mock price calculation (₦17,000 per unit from Figma)
   const pricePerUnit = 17000;
@@ -626,4 +660,8 @@ export default function ConfiguratorSidebar({
       </div>
     </div>
   );
-}
+});
+
+ConfiguratorSidebar.displayName = 'ConfiguratorSidebar';
+
+export default ConfiguratorSidebar;

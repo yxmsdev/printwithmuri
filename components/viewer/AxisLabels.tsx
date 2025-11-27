@@ -1,6 +1,6 @@
 export default function AxisLabels() {
   return (
-    <div className="absolute bottom-4 right-4 pointer-events-none">
+    <div className="absolute bottom-2 right-4 pointer-events-none flex items-center">
       <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
         {/* Origin circle */}
         <circle cx="25" cy="60" r="3" fill="#888" />
