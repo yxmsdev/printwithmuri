@@ -1,23 +1,39 @@
 # Multi-stage Dockerfile for Print with Muri
 # Includes CuraEngine for server-side 3D model slicing
 
+# Build CuraEngine from source
+FROM debian:bookworm-slim AS curaengine-builder
+
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    g++ \
+    libarcus-dev \
+    protobuf-compiler \
+    libprotobuf-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone --depth 1 --branch 5.7.2 https://github.com/Ultimaker/CuraEngine.git && \
+    cd CuraEngine && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    strip CuraEngine
+
+# Main application image
 FROM node:20-alpine AS base
 
-# Install dependencies for CuraEngine
+# Install runtime dependencies for CuraEngine
 RUN apk add --no-cache \
-    wget \
-    tar \
     libc6-compat \
-    libstdc++
+    libstdc++ \
+    libgcc
 
-# Download and install CuraEngine
-RUN wget https://github.com/Ultimaker/CuraEngine/releases/download/5.7.0/CuraEngine-5.7.0-linux-X64.tar.gz && \
-    tar -xzf CuraEngine-5.7.0-linux-X64.tar.gz -C /usr/local/bin/ && \
-    chmod +x /usr/local/bin/CuraEngine && \
-    rm CuraEngine-5.7.0-linux-X64.tar.gz
-
-# Verify CuraEngine installation
-RUN /usr/local/bin/CuraEngine help || echo "CuraEngine installed"
+# Copy CuraEngine binary from builder
+COPY --from=curaengine-builder /build/CuraEngine/build/CuraEngine /usr/local/bin/CuraEngine
+RUN chmod +x /usr/local/bin/CuraEngine
 
 # Dependencies stage
 FROM base AS deps
