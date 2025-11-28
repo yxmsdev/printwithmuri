@@ -41,7 +41,7 @@ async function ensureTempDir(): Promise<void> {
 }
 
 /**
- * Generate CuraEngine command based on configuration
+ * Generate PrusaSlicer command based on configuration
  */
 function buildCuraCommand(
   inputPath: string,
@@ -58,42 +58,18 @@ function buildCuraCommand(
     ultra: 0.05,
   };
 
-  // Print speeds by quality (mm/s)
-  const printSpeeds = {
-    draft: 80,
-    standard: 60,
-    high: 40,
-    ultra: 20,
-  };
-
-  // Material temperatures
-  const materialSettings = {
-    PLA: { nozzle: 210, bed: 60 },
-    PETG: { nozzle: 235, bed: 80 },
-    ABS: { nozzle: 240, bed: 100 },
-    Resin: { nozzle: 0, bed: 0 }, // N/A for FDM
-  };
-
   const layerHeight = layerHeights[quality];
-  const printSpeed = printSpeeds[quality];
-  const temps = materialSettings[material];
 
-  // Build CuraEngine command with settings
-  // Note: This is a simplified command. In production, you'd use a full JSON config file
+  // Build PrusaSlicer command with settings
+  // Using PrusaSlicer CLI syntax
   const command = [
     CURAENGINE_PATH,
-    'slice',
-    `-l "${inputPath}"`,
-    `-o "${outputPath}"`,
-    `-s layer_height=${layerHeight}`,
-    `-s infill_sparse_density=${infillDensity}`,
-    `-s speed_print=${printSpeed}`,
-    `-s material_print_temperature=${temps.nozzle}`,
-    `-s material_bed_temperature=${temps.bed}`,
-    `-s machine_width=220`,
-    `-s machine_depth=220`,
-    `-s machine_height=250`,
-    `-s machine_nozzle_size=0.4`,
+    '--export-gcode',
+    `"${inputPath}"`,
+    '--output', `"${outputPath}"`,
+    '--layer-height', layerHeight.toString(),
+    '--fill-density', `${infillDensity}%`,
+    '--nozzle-diameter', '0.4',
   ].join(' ');
 
   return command;
