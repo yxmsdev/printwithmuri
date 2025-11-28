@@ -1,24 +1,34 @@
-# Multi-stage Dockerfile for Print with Muri
 # Uses PrusaSlicer CLI for 3D model slicing
 
 FROM node:20-bullseye-slim AS base
 
-# Install PrusaSlicer and dependencies
+# Install dependencies for AppImage extraction
 RUN apt-get update && apt-get install -y \
+    squashfs-tools \
     wget \
-    ca-certificates \
+    libgl1 \
+    libglu1-mesa \
+    libxrender1 \
+    libxi6 \
+    libxrandr2 \
+    libxcursor1 \
+    libxinerama1 \
     libgtk-3-0 \
     libglib2.0-0 \
+    libwebkit2gtk-4.0-37 \
+    libegl1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Download and install PrusaSlicer AppImage
-RUN wget -O /tmp/PrusaSlicer.AppImage https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.1/PrusaSlicer-2.7.1+linux-x64-GTK3-202311211648.AppImage && \
-    chmod +x /tmp/PrusaSlicer.AppImage && \
-    cd /tmp && \
-    ./PrusaSlicer.AppImage --appimage-extract && \
-    mv squashfs-root /opt/PrusaSlicer && \
+
+# Install PrusaSlicer using manual extraction
+RUN cd /tmp && \
+    wget https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.8.1/PrusaSlicer-2.8.1+linux-x64-older-distros-GTK3-202409181354.AppImage && \
+chmod +x PrusaSlicer-2.8.1+linux-x64-older-distros-GTK3-202409181354.AppImage && \
+offset=$(./PrusaSlicer-2.8.1+linux-x64-older-distros-GTK3-202409181354.AppImage --appimage-offset 2>/dev/null || echo "188392") && \
+dd if=PrusaSlicer-2.8.1+linux-x64-older-distros-GTK3-202409181354.AppImage bs=1 skip=$offset of=filesystem.squashfs 2>/dev/null && \
+    unsquashfs -d /opt/PrusaSlicer filesystem.squashfs && \
     ln -s /opt/PrusaSlicer/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer && \
-    rm /tmp/PrusaSlicer.AppImage
+    rm -rf /tmp/*
 
 # Create CuraEngine wrapper that calls PrusaSlicer
 RUN echo '#!/bin/bash\nexec /usr/local/bin/prusa-slicer "$@"' > /usr/local/bin/CuraEngine && \
