@@ -1,15 +1,27 @@
 # Multi-stage Dockerfile for Print with Muri
-# Simplified version - CuraEngine to be installed manually on host
+# Uses PrusaSlicer CLI for 3D model slicing
 
 FROM node:20-bullseye-slim AS base
 
-# Install basic dependencies
+# Install PrusaSlicer and dependencies
 RUN apt-get update && apt-get install -y \
+    wget \
     ca-certificates \
+    libgtk-3-0 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a placeholder for CuraEngine (to be mounted from host or installed later)
-RUN echo '#!/bin/bash\necho "CuraEngine not installed - slicing disabled"\nexit 1' > /usr/local/bin/CuraEngine && \
+# Download and install PrusaSlicer AppImage
+RUN wget -O /tmp/PrusaSlicer.AppImage https://github.com/prusa3d/PrusaSlicer/releases/download/version_2.7.1/PrusaSlicer-2.7.1+linux-x64-GTK3-202311211648.AppImage && \
+    chmod +x /tmp/PrusaSlicer.AppImage && \
+    cd /tmp && \
+    ./PrusaSlicer.AppImage --appimage-extract && \
+    mv squashfs-root /opt/PrusaSlicer && \
+    ln -s /opt/PrusaSlicer/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer && \
+    rm /tmp/PrusaSlicer.AppImage
+
+# Create CuraEngine wrapper that calls PrusaSlicer
+RUN echo '#!/bin/bash\nexec /usr/local/bin/prusa-slicer "$@"' > /usr/local/bin/CuraEngine && \
     chmod +x /usr/local/bin/CuraEngine
 
 # Dependencies stage
