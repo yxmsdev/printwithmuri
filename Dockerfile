@@ -1,22 +1,16 @@
 # Multi-stage Dockerfile for Print with Muri
-# Uses Debian base for better CuraEngine compatibility
+# Simplified version - CuraEngine to be installed manually on host
 
 FROM node:20-bullseye-slim AS base
 
-# Install dependencies
+# Install basic dependencies
 RUN apt-get update && apt-get install -y \
-    wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Download and extract CuraEngine binary
-RUN mkdir -p /tmp/cura && \
-    wget -O /tmp/cura.tar.gz https://github.com/Ultimaker/CuraEngine/releases/download/4.13.1/CuraEngine-4.13.1-linux.tar.gz && \
-    tar -xzf /tmp/cura.tar.gz -C /tmp/cura && \
-    find /tmp/cura -name "CuraEngine" -type f -exec cp {} /usr/local/bin/CuraEngine \; && \
-    chmod +x /usr/local/bin/CuraEngine && \
-    rm -rf /tmp/cura /tmp/cura.tar.gz && \
-    ls -la /usr/local/bin/CuraEngine
+# Create a placeholder for CuraEngine (to be mounted from host or installed later)
+RUN echo '#!/bin/bash\necho "CuraEngine not installed - slicing disabled"\nexit 1' > /usr/local/bin/CuraEngine && \
+    chmod +x /usr/local/bin/CuraEngine
 
 # Dependencies stage
 FROM base AS deps
