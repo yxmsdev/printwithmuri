@@ -3,18 +3,20 @@
 
 FROM node:20-bullseye-slim AS base
 
-# Install CuraEngine and dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Download CuraEngine binary (Ubuntu version works on Debian)
-RUN wget -O /tmp/cura.tar.gz https://github.com/Ultimaker/CuraEngine/releases/download/4.13.1/CuraEngine-4.13.1-linux.tar.gz && \
-    tar -xzf /tmp/cura.tar.gz -C /usr/local/bin/ --strip-components=1 && \
+# Download and extract CuraEngine binary
+RUN mkdir -p /tmp/cura && \
+    wget -O /tmp/cura.tar.gz https://github.com/Ultimaker/CuraEngine/releases/download/4.13.1/CuraEngine-4.13.1-linux.tar.gz && \
+    tar -xzf /tmp/cura.tar.gz -C /tmp/cura && \
+    find /tmp/cura -name "CuraEngine" -type f -exec cp {} /usr/local/bin/CuraEngine \; && \
     chmod +x /usr/local/bin/CuraEngine && \
-    rm /tmp/cura.tar.gz && \
-    /usr/local/bin/CuraEngine help || echo "CuraEngine installed"
+    rm -rf /tmp/cura /tmp/cura.tar.gz && \
+    ls -la /usr/local/bin/CuraEngine
 
 # Dependencies stage
 FROM base AS deps
