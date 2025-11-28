@@ -25,7 +25,7 @@ export default function Home() {
   const router = useRouter();
   const sidebarRef = useRef<ConfiguratorSidebarRef>(null);
   
-  const [selectedFile, setSelectedFile] = useState<{ url: string; name: string } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ url: string; name: string; file: File } | null>(null);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [initialConfig, setInitialConfig] = useState<Partial<ConfigState> | undefined>(undefined);
   const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null);
@@ -64,15 +64,17 @@ export default function Home() {
       URL.revokeObjectURL(selectedFile.url);
     }
     const url = URL.createObjectURL(file);
-    setSelectedFile({ url, name: file.name });
-    
+    setSelectedFile({ url, name: file.name, file });
+
     // Clear loaded draft since we have a new file
     setLoadedDraftId(null);
     setInitialConfig(undefined);
   };
 
   const handleModelLoaded = (info: ModelInfo) => {
+    console.log('🎨 Model loaded! Info:', info);
     setModelInfo(info);
+    // Server-side slicing will happen in ConfiguratorSidebar when user changes settings
   };
 
   const handleAddToBag = () => {
@@ -145,6 +147,7 @@ export default function Home() {
             <ConfiguratorSidebar
               ref={sidebarRef}
               fileName={selectedFile.name}
+              file={selectedFile.file}
               modelInfo={modelInfo}
               initialConfig={initialConfig}
               onChangeFile={(file: File) => {
@@ -153,7 +156,7 @@ export default function Home() {
                   URL.revokeObjectURL(selectedFile.url);
                 }
                 const url = URL.createObjectURL(file);
-                setSelectedFile({ url, name: file.name });
+                setSelectedFile({ url, name: file.name, file });
                 setModelInfo(null); // Reset model info until new model loads
                 setLoadedDraftId(null); // Clear draft since file changed
                 setInitialConfig(undefined);

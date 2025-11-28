@@ -3,18 +3,22 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import ComingSoonContent from '@/components/layout/ComingSoonContent';
 import BagModal from '@/components/bag/BagModal';
 import { useBagStore } from '@/stores/useBagStore';
 import { useDraftsStore } from '@/stores/useDraftsStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [comingSoonType, setComingSoonType] = useState<'paper' | 'merch'>('paper');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
-  
+
   // Get bag state from store
   const bagItems = useBagStore((state) => state.items);
   const showBag = useBagStore((state) => state.isOpen);
@@ -25,6 +29,9 @@ const Header = () => {
   // Get drafts count
   const drafts = useDraftsStore((state) => state.drafts);
   const draftCount = drafts.length;
+
+  // Get user's name or email
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest User';
 
   // Close account menu when clicking outside
   useEffect(() => {
@@ -41,6 +48,17 @@ const Header = () => {
   const handleOpenComingSoon = (type: 'paper' | 'merch') => {
     setComingSoonType(type);
     setShowComingSoon(true);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setShowAccountMenu(false);
+    router.push('/');
+  };
+
+  const handleSignIn = () => {
+    setShowAccountMenu(false);
+    router.push('/auth/login');
   };
 
   return (
@@ -118,53 +136,71 @@ const Header = () => {
                 <div className="absolute right-0 top-full mt-2 bg-white rounded-[4px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[160px]">
                   {/* User Info */}
                   <div className="px-6 py-2 border-b border-[#B7B7B7]/50">
-                    <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none">
-                      Guest User
+                    <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none truncate max-w-[140px]">
+                      {userName}
                     </p>
-                    <p className="text-[10px] text-[#F4008A] text-center leading-[1.37] mt-1">
-                      Sign in to save
-                    </p>
+                    {!user && (
+                      <p className="text-[10px] text-[#F4008A] text-center leading-[1.37] mt-1">
+                        Sign in to save
+                      </p>
+                    )}
+                    {user && user.email && (
+                      <p className="text-[10px] text-[#7A7A7A] text-center leading-[1.37] mt-1 truncate max-w-[140px]">
+                        {user.email}
+                      </p>
+                    )}
                   </div>
 
-                  {/* My Orders */}
-                  <Link
-                    href="/orders"
-                    onClick={() => setShowAccountMenu(false)}
-                    className="block w-full px-3 py-2 rounded-[2px] text-[13px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
-                  >
-                    My Orders
-                  </Link>
+                  {user && (
+                    <>
+                      {/* My Orders */}
+                      <Link
+                        href="/orders"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block w-full px-3 py-2 rounded-[2px] text-[13px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
+                      >
+                        My Orders
+                      </Link>
 
-                  {/* Edit Profile */}
-                  <button
-                    onClick={() => {
-                      setShowAccountMenu(false);
-                      alert('Edit Profile coming soon!');
-                    }}
-                    className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
-                  >
-                    Edit Profile
-                  </button>
+                      {/* Support */}
+                      <Link
+                        href="/support"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                      >
+                        Support
+                      </Link>
 
-                  {/* Support */}
-                  <Link
-                    href="/support"
-                    onClick={() => setShowAccountMenu(false)}
-                    className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
-                  >
-                    Support
-                  </Link>
+                      {/* Log Out */}
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                      >
+                        Log Out
+                      </button>
+                    </>
+                  )}
 
-                  {/* Log Out / Sign In */}
-                  <button
-                    onClick={() => {
-                      setShowAccountMenu(false);
-                      alert('Login coming soon!');
-                    }}
-                    className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
-                  >
-                    Sign In
-                  </button>
+                  {!user && (
+                    <>
+                      {/* Sign In */}
+                      <button
+                        onClick={handleSignIn}
+                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
+                      >
+                        Sign In
+                      </button>
+
+                      {/* Sign Up */}
+                      <Link
+                        href="/auth/signup"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#F4008A] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
             </div>

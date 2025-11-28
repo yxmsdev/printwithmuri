@@ -116,21 +116,20 @@ export function estimateWeight(
     Resin: 1.10,
   };
 
-  const WALL_THICKNESS = 1.2; // mm (3 walls at 0.4mm nozzle)
+  // Typical shell is about 15% of total volume for standard prints
+  const SHELL_PERCENTAGE = 0.15;
 
-  const { volume, surfaceArea } = modelInfo;
+  const { volume } = modelInfo;
   const infillDecimal = infillDensity / 100;
 
   // Convert mm³ to cm³
   const volumeCm3 = volume / 1000;
-  const surfaceAreaCm2 = surfaceArea / 100;
 
-  // Estimate shell volume (surface area × wall thickness)
-  const wallThicknessCm = WALL_THICKNESS / 10;
-  const shellVolumeCm3 = surfaceAreaCm2 * wallThicknessCm;
+  // Shell volume is a fixed percentage (walls + top/bottom layers)
+  const shellVolumeCm3 = volumeCm3 * SHELL_PERCENTAGE;
 
   // Interior volume for infill
-  const interiorVolumeCm3 = Math.max(0, volumeCm3 - shellVolumeCm3);
+  const interiorVolumeCm3 = volumeCm3 * (1 - SHELL_PERCENTAGE);
   const infillVolumeCm3 = interiorVolumeCm3 * infillDecimal;
 
   // Total effective volume

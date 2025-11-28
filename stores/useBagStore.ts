@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { BagItem, PrintConfig, PriceBreakdown, ModelInfo } from '@/types';
+import { BagItem, PrintConfig, ModelInfo } from '@/types';
+import { calculatePrice } from '@/lib/pricing';
 
 interface BagStore {
   items: BagItem[];
@@ -124,14 +125,16 @@ export const useBagStore = create<BagStore>()(
 // Helper function to create a BagItem from configurator data
 export function createBagItem(
   modelName: string,
-  modelInfo: ModelInfo | null,
+  modelInfo: ModelInfo,
   config: {
     quantity: number;
     quality: string;
     material: string;
     color: string;
+    infillType?: string;
+    infillDensity?: number;
   },
-  pricePerUnit: number = 17000
+  priceBreakdown?: import('@/types').PriceBreakdown
 ): Omit<BagItem, 'id'> {
   const printConfig: PrintConfig = {
     modelId: generateId(),
@@ -139,27 +142,19 @@ export function createBagItem(
     quality: config.quality.toLowerCase() as 'draft' | 'standard' | 'high',
     material: config.material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
     color: config.color,
-    infillType: 'hexagonal',
-    infillDensity: 20,
+    infillType: (config.infillType || 'hexagonal') as 'hexagonal' | 'grid' | 'triangles' | 'gyroid',
+    infillDensity: config.infillDensity || 20,
     designGuideImages: [],
   };
 
-  const priceBreakdown: PriceBreakdown = {
-    estimatedWeight: 12, // TODO: Calculate from model info
-    printTime: 2, // TODO: Calculate from model info
-    machineCost: pricePerUnit * 0.3,
-    materialCost: pricePerUnit * 0.5,
-    setupFee: pricePerUnit * 0.2,
-    itemTotal: pricePerUnit,
-    quantity: config.quantity,
-    subtotal: pricePerUnit * config.quantity,
-  };
+  // Use provided priceBreakdown (with Cloud Slicer data) or fallback to local calculation
+  const price = priceBreakdown || calculatePrice(printConfig, modelInfo);
 
   return {
     modelId: printConfig.modelId,
     modelName,
     config: printConfig,
-    price: priceBreakdown,
+    price: price,
   };
 }
 

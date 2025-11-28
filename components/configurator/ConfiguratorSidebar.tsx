@@ -1,9 +1,10 @@
 'use client';
 
-import { ModelInfo } from '@/types';
-import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { ModelInfo, PrintConfig, PriceBreakdown, SlicerQuoteResponse } from '@/types';
+import { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
+import { calculatePrice } from '@/lib/pricing';
 
 export interface ConfigState {
   quantity: number;
@@ -21,6 +22,7 @@ export interface ConfiguratorSidebarRef {
 
 interface ConfiguratorSidebarProps {
   fileName: string;
+  file: File | null;
   modelInfo: ModelInfo | null;
   onChangeFile: (file: File) => void;
   onAddToBag: () => void;
@@ -30,6 +32,7 @@ interface ConfiguratorSidebarProps {
 
 const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSidebarProps>(({
   fileName,
+  file,
   modelInfo,
   onChangeFile,
   onAddToBag,
@@ -67,6 +70,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   const [addedToBag, setAddedToBag] = useState(false);
   const [hasChanges, setHasChanges] = useState(true); // Track if user has made changes since last add
   const [dimensionUnit, setDimensionUnit] = useState<'mm' | 'cm' | 'in'>('mm');
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
   
@@ -98,9 +104,107 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
     }
   };
 
-  // Mock price calculation (₦17,000 per unit from Figma)
-  const pricePerUnit = 17000;
-  const totalPrice = pricePerUnit * quantity;
+  // Fetch price from server-side slicer when configuration changes
+  useEffect(() => {
+    const fetchServerSlicedQuote = async () => {
+      console.log('💰 Price calculation triggered. ModelInfo:', modelInfo, 'File:', file);
+
+      // Need both modelInfo (for local fallback) and file (for slicing)
+      if (!file || !modelInfo) {
+        console.log('⚠️ No file or modelInfo, using local estimation');
+        // Use local estimation as fallback
+        if (modelInfo) {
+          setIsLoadingPrice(false);
+          const printConfig: PrintConfig = {
+            modelId: 'temp',
+            quantity: quantity,
+            quality: quality.toLowerCase() as 'draft' | 'standard' | 'high' | 'ultra',
+            material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
+            color: selectedColor.value,
+            infillType: infillType.toLowerCase() as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
+            infillDensity: infillDensity,
+            designGuideImages: [],
+          };
+          const localPrice = calculatePrice(printConfig, modelInfo);
+          console.log('📊 Local price calculated:', localPrice);
+          setPriceBreakdown({ ...localPrice, source: 'local-estimation' });
+        }
+        return;
+      }
+
+      console.log('🎯 File and modelInfo available, starting server-side slicing');
+
+      setIsLoadingPrice(true);
+      setPriceError(null);
+
+      try {
+        console.log('📤 Requesting server-side slice...');
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('quality', quality.toLowerCase());
+        formData.append('material', material);
+        formData.append('infillDensity', infillDensity.toString());
+
+        const response = await fetch('/api/slicer/slice', {
+          method: 'POST',
+          body: formData,
+        });
+
+        console.log('📥 Slice response status:', response.status);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('❌ Slicing failed:', errorData);
+          throw new Error(errorData.error || 'Failed to slice model');
+        }
+
+        const data: SlicerQuoteResponse = await response.json();
+        console.log('✅ Server slice quote received:', data);
+
+        // Convert server slice quote to PriceBreakdown format
+        const slicedPricing = {
+          estimatedWeight: data.quote.estimatedWeight,
+          printTime: data.quote.printTime,
+          machineCost: data.quote.machineCost,
+          materialCost: data.quote.materialCost,
+          setupFee: data.quote.setupFee,
+          itemTotal: data.quote.itemTotal,
+          quantity: quantity,
+          subtotal: data.quote.itemTotal * quantity,
+          quoteId: data.quote.quote_id,
+          gcodeFile: data.quote.gcode_file,
+          layerCount: data.quote.layerCount,
+          source: 'server-sliced' as const,
+        };
+        console.log('💵 Setting server-sliced pricing:', slicedPricing);
+        setPriceBreakdown(slicedPricing);
+      } catch (error) {
+        console.error('❌ Server slicing error:', error);
+        setPriceError(error instanceof Error ? error.message : 'Failed to slice model');
+
+        // Fallback to local pricing
+        const printConfig: PrintConfig = {
+          modelId: 'temp',
+          quantity: quantity,
+          quality: quality.toLowerCase() as 'draft' | 'standard' | 'high' | 'ultra',
+          material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
+          color: selectedColor.value,
+          infillType: infillType.toLowerCase() as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
+          infillDensity: infillDensity,
+          designGuideImages: [],
+        };
+        const localPrice = calculatePrice(printConfig, modelInfo);
+        setPriceBreakdown({ ...localPrice, source: 'local-estimation' });
+      } finally {
+        setIsLoadingPrice(false);
+      }
+    };
+
+    fetchServerSlicedQuote();
+  }, [file, modelInfo, quality, material, infillDensity, quantity, selectedColor.value, infillType]);
+
+  const totalPrice = priceBreakdown?.subtotal || 0;
 
   const incrementQuantity = () => {
     setQuantity(q => q + 1);
@@ -122,7 +226,17 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       openBag();
       return;
     }
-    
+
+    if (!modelInfo) {
+      console.error('Cannot add to bag: model info not available');
+      return;
+    }
+
+    if (!priceBreakdown) {
+      console.error('Cannot add to bag: pricing not available');
+      return;
+    }
+
     const bagItem = createBagItem(
       fileName,
       modelInfo,
@@ -131,20 +245,22 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         quality,
         material,
         color: selectedColor.value,
+        infillType,
+        infillDensity,
       },
-      pricePerUnit
+      priceBreakdown  // Pass the Cloud Slicer pricing data
     );
-    
+
     addItem(bagItem);
     setAddedToBag(true);
     setHasChanges(false); // Reset changes flag after adding
-    
+
     // Open the bag modal
     openBag();
-    
+
     // Reset feedback after 2 seconds
     setTimeout(() => setAddedToBag(false), 2000);
-    
+
     // Call the parent callback
     onAddToBag();
   };
@@ -456,7 +572,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                   {/* Hidden Range Input */}
                   <input
                     type="range"
-                    min="0"
+                    min="5"
                     max="100"
                     value={infillDensity}
                     onChange={(e) => { setInfillDensity(parseInt(e.target.value)); setHasChanges(true); }}
@@ -627,11 +743,36 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-[14px] text-[#8D8D8D] capitalize tracking-[0.28px]">Weight</span>
-              <span className="text-[14px] text-[#8D8D8D]">12g</span>
+              <span className="text-[14px] text-[#8D8D8D]">
+                {isLoadingPrice ? (
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-[#8D8D8D] border-r-transparent"></span>
+                    Loading...
+                  </span>
+                ) : priceBreakdown?.estimatedWeight ? (
+                  `${priceBreakdown.estimatedWeight.toFixed(1)}g`
+                ) : (
+                  'Calculating...'
+                )}
+              </span>
             </div>
             <div className="flex items-center justify-between py-1">
-              <span className="text-[14px] font-semibold text-[#1F1F1F] capitalize tracking-[0.28px]">Cost</span>
-              <span className="text-[14px] font-semibold text-[#1F1F1F] uppercase">₦{totalPrice.toLocaleString()}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-[14px] font-semibold text-[#1F1F1F] capitalize tracking-[0.28px]">Cost</span>
+                {priceBreakdown?.source === 'server-sliced' && (
+                  <span className="text-[9px] text-green-600 font-medium">✓ SLICED</span>
+                )}
+              </div>
+              <span className="text-[14px] font-semibold text-[#1F1F1F] uppercase">
+                {isLoadingPrice ? (
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-[#1F1F1F] border-r-transparent"></span>
+                    Loading...
+                  </span>
+                ) : (
+                  `₦${totalPrice.toLocaleString()}`
+                )}
+              </span>
             </div>
           </div>
         )}

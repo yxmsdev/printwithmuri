@@ -43,6 +43,11 @@ export default function DraftsPage() {
   };
 
   const handleAddToBag = (draft: typeof drafts[0]) => {
+    if (!draft.modelInfo) {
+      console.error('Cannot add to bag: model info not available');
+      return;
+    }
+
     const bagItem = createBagItem(
       draft.modelName,
       draft.modelInfo,
@@ -51,10 +56,11 @@ export default function DraftsPage() {
         quality: draft.config.quality,
         material: draft.config.material,
         color: draft.config.color,
-      },
-      17000
+        infillType: draft.config.infillType,
+        infillDensity: draft.config.infillDensity,
+      }
     );
-    
+
     addItem(bagItem);
     removeDraft(draft.id);
     setOpenDropdown(null);

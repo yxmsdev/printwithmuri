@@ -14,10 +14,10 @@ export interface ModelInfo {
 export interface PrintConfig {
   modelId: string;
   quantity: number;                      // 1-100
-  quality: 'draft' | 'standard' | 'high';
+  quality: 'draft' | 'standard' | 'high' | 'ultra';
   material: 'PLA' | 'PETG' | 'ABS' | 'Resin';
   color: string;                         // hex
-  infillType: 'hexagonal' | 'grid' | 'triangles' | 'gyroid';
+  infillType: 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic';
   infillDensity: number;                 // 5-100 (percentage)
   designGuideImages: File[];
 }
@@ -31,6 +31,10 @@ export interface PriceBreakdown {
   itemTotal: number;          // ₦
   quantity: number;
   subtotal: number;           // ₦
+  quoteId?: string;           // Quote ID from slicer
+  gcodeFile?: string;         // G-code filename if sliced
+  layerCount?: number;        // Number of layers (from slicing)
+  source: 'server-sliced' | 'local-estimation';  // Source of pricing
 }
 
 export interface BagItem {
@@ -114,4 +118,28 @@ export interface Draft {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+// Server-Side Slicer Types
+export interface SlicerQuoteResponse {
+  success: boolean;
+  quote: {
+    quote_id: string;
+    gcode_file: string;
+    estimatedWeight: number;
+    printTime: number;
+    machineCost: number;
+    materialCost: number;
+    setupFee: number;
+    itemTotal: number;
+    currency: string;
+    slicingDuration?: number;
+    layerCount?: number;
+  };
+}
+
+export interface SlicerError {
+  error: string;
+  details?: string;
+  status?: number;
 }
