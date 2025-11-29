@@ -32,10 +32,20 @@ export function parseGCode(gcodeContent: string, material: string): GCodeMetrics
   let printTimeSeconds = 0;
   let filamentLengthMm = 0;
   let layerCount = 0;
-  let maxE = 0; // Track maximum extrusion value
+  let maxE = 0; // Track maximum extrusion value (fallback)
+  let filamentUsedFromMetadata = 0; // PrusaSlicer metadata
 
   for (const line of lines) {
     const trimmed = line.trim();
+
+    // Extract filament used from PrusaSlicer metadata comment
+    // Format: "; filament used [mm] = 1234.56" or "; filament used = 1234.56mm"
+    if (trimmed.includes('filament used') && trimmed.includes('mm')) {
+      const filamentMatch = trimmed.match(/filament used.*?=\s*([\d.]+)/i);
+      if (filamentMatch) {
+        filamentUsedFromMetadata = parseFloat(filamentMatch[1]);
+      }
+    }
 
     // Extract print time from PrusaSlicer comment (; estimated printing time)
     if (trimmed.includes('estimated printing time')) {
@@ -47,13 +57,16 @@ export function parseGCode(gcodeContent: string, material: string): GCodeMetrics
         const seconds = parseInt(timeMatch[3], 10);
         printTimeSeconds = hours * 3600 + minutes * 60 + seconds;
       } else {
-        // Try format: "1h 23m" or "45m 30s"
+        // Try format: "1h 23m" or "45m 30s" or just "45m"
         const hm = trimmed.match(/(\d+)h\s*(\d+)m/);
         const ms = trimmed.match(/(\d+)m\s*(\d+)s/);
+        const m = trimmed.match(/=\s*(\d+)m\s*$/);
         if (hm) {
           printTimeSeconds = parseInt(hm[1], 10) * 3600 + parseInt(hm[2], 10) * 60;
         } else if (ms) {
           printTimeSeconds = parseInt(ms[1], 10) * 60 + parseInt(ms[2], 10);
+        } else if (m) {
+          printTimeSeconds = parseInt(m[1], 10) * 60;
         }
       }
     }
@@ -64,7 +77,7 @@ export function parseGCode(gcodeContent: string, material: string): GCodeMetrics
       layerCount++;
     }
 
-    // Track extrusion (E value) to calculate filament length
+    // Track extrusion (E value) as fallback if metadata not found
     if (trimmed.startsWith('G1') || trimmed.startsWith('G0')) {
       const eMatch = trimmed.match(/E([\d.]+)/);
       if (eMatch) {
@@ -76,8 +89,8 @@ export function parseGCode(gcodeContent: string, material: string): GCodeMetrics
     }
   }
 
-  // Filament length is the max E value (in mm)
-  filamentLengthMm = maxE;
+  // Use metadata value if available, otherwise fall back to max E value
+  filamentLengthMm = filamentUsedFromMetadata > 0 ? filamentUsedFromMetadata : maxE;
 
   // Calculate filament weight
   // Volume = length × π × radius²
