@@ -50,6 +50,12 @@ function buildCuraCommand(
 ): string {
   const { quality, material, infillDensity } = config;
 
+  // Configuration file paths (will be in Docker container)
+  const configDir = '/app/config/prusaslicer';
+  const printerProfile = `${configDir}/printer/Generic_FDM.ini`;
+  const filamentProfile = `${configDir}/filament/${material}.ini`;
+  const printProfile = `${configDir}/print/Standard_Quality.ini`;
+
   // Layer heights by quality
   const layerHeights = {
     draft: 0.3,
@@ -60,16 +66,17 @@ function buildCuraCommand(
 
   const layerHeight = layerHeights[quality];
 
-  // Build PrusaSlicer command with settings
-  // Using PrusaSlicer CLI syntax
+  // Build PrusaSlicer command with config files and overrides
   const command = [
     CURAENGINE_PATH,
     '--export-gcode',
     `"${inputPath}"`,
     '--output', `"${outputPath}"`,
+    '--load', `"${printerProfile}"`,
+    '--load', `"${filamentProfile}"`,
+    '--load', `"${printProfile}"`,
     '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
-    '--nozzle-diameter', '0.4',
   ].join(' ');
 
   return command;
