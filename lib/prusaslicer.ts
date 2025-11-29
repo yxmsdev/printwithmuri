@@ -3,13 +3,13 @@
  * Handles execution of PrusaSlicer CLI for 3D model slicing
  */
 
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { parseGCode, GCodeMetrics } from './gcode-parser';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const PRUSASLICER_PATH = process.env.PRUSASLICER_PATH || process.env.CURAENGINE_PATH || '/usr/local/bin/prusa-slicer';
 const SLICER_TIMEOUT = parseInt(process.env.SLICER_TIMEOUT || '60000', 10); // 60 seconds default
@@ -41,13 +41,25 @@ async function ensureTempDir(): Promise<void> {
 }
 
 /**
- * Generate PrusaSlicer command based on configuration
+ * Validate that a config file exists and is readable
  */
-function buildPrusaSlicerCommand(
+async function validateConfigFile(filePath: string, description: string): Promise<void> {
+  try {
+    await fs.access(filePath, fs.constants.R_OK);
+  } catch {
+    throw new Error(`${description} not found or not readable: ${filePath}`);
+  }
+}
+
+/**
+ * Build PrusaSlicer arguments array based on configuration
+ * Returns an array of arguments (safe for execFile, no shell injection)
+ */
+async function buildPrusaSlicerArgs(
   inputPath: string,
   outputPath: string,
   config: SlicerConfig
-): string {
+): Promise<string[]> {
   const { quality, material, infillDensity } = config;
 
   // Configuration file paths (will be in Docker container)
@@ -56,8 +68,13 @@ function buildPrusaSlicerCommand(
   const filamentProfile = `${configDir}/filament/${material}.ini`;
   const printProfile = `${configDir}/print/Standard_Quality.ini`;
 
+  // Validate config files exist before attempting to slice
+  await validateConfigFile(printerProfile, 'Printer profile');
+  await validateConfigFile(filamentProfile, `Filament profile for ${material}`);
+  await validateConfigFile(printProfile, 'Print quality profile');
+
   // Layer heights by quality
-  const layerHeights = {
+  const layerHeights: Record<SlicerConfig['quality'], number> = {
     draft: 0.3,
     standard: 0.2,
     high: 0.1,
@@ -66,29 +83,28 @@ function buildPrusaSlicerCommand(
 
   const layerHeight = layerHeights[quality];
 
-  // Build PrusaSlicer command with config files and overrides
-  // Note: Removed quotes around paths - they cause shell parsing issues
-  const command = [
-    PRUSASLICER_PATH,
+  // Build arguments array (execFile handles escaping automatically)
+  const args: string[] = [
     '--export-gcode',
-    inputPath,
     '--output', outputPath,
     '--load', printerProfile,
     '--load', filamentProfile,
     '--load', printProfile,
     '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
-    // Enable supports for better print quality (use = syntax for boolean values)
-    '--support-material=1',
-    '--support-material-auto=1',
-    '--support-material-threshold=45', // Auto-generate supports for overhangs > 45°
+    // Enable supports for better print quality
+    '--support-material', '1',
+    '--support-material-auto', '1',
+    '--support-material-threshold', '45', // Auto-generate supports for overhangs > 45°
     // Enable brim for better bed adhesion
-    '--brim-width=5', // 5mm brim
-    '--skirts=1', // Number of skirt loops
-    '--skirt-distance=6', // Distance from object (mm)
-  ].join(' ');
+    '--brim-width', '5', // 5mm brim
+    '--skirts', '1', // Number of skirt loops
+    '--skirt-distance', '6', // Distance from object (mm)
+    // Input file must be last
+    inputPath,
+  ];
 
-  return command;
+  return args;
 }
 
 /**
@@ -113,14 +129,21 @@ export async function sliceModel(
     console.log('PrusaSlicer Path:', PRUSASLICER_PATH);
     console.log('Timeout:', SLICER_TIMEOUT, 'ms');
 
-    const command = buildPrusaSlicerCommand(inputFilePath, gcodeFilePath, config);
-    console.log('Full Command:', command);
+    // Validate input file exists
+    try {
+      await fs.access(inputFilePath, fs.constants.R_OK);
+    } catch {
+      throw new Error(`Input file not found or not readable: ${inputFilePath}`);
+    }
 
-    // Execute PrusaSlicer with timeout
+    const args = await buildPrusaSlicerArgs(inputFilePath, gcodeFilePath, config);
+    console.log('Command:', PRUSASLICER_PATH, args.join(' '));
+
+    // Execute PrusaSlicer with timeout using execFile (safe from shell injection)
     console.log('⏳ Executing PrusaSlicer (this may take up to', SLICER_TIMEOUT / 1000, 'seconds)...');
     const execStart = Date.now();
 
-    const { stdout, stderr } = await execAsync(command, {
+    const { stdout, stderr } = await execFileAsync(PRUSASLICER_PATH, args, {
       timeout: SLICER_TIMEOUT,
       maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
     });
@@ -138,20 +161,21 @@ export async function sliceModel(
     }
 
     // Verify G-code file was created
+    let gcodeStats: Awaited<ReturnType<typeof fs.stat>>;
     try {
-      const stats = await fs.stat(gcodeFilePath);
-      console.log('✅ G-code file created:', gcodeFilePath, `(${stats.size} bytes)`);
-    } catch (statError) {
+      gcodeStats = await fs.stat(gcodeFilePath);
+      console.log('✅ G-code file created:', gcodeFilePath, `(${gcodeStats.size} bytes)`);
+    } catch {
       throw new Error(`G-code file was not created at ${gcodeFilePath}. PrusaSlicer may have failed silently.`);
+    }
+
+    if (gcodeStats.size === 0) {
+      throw new Error('G-code file is empty');
     }
 
     // Read and parse the generated G-code
     console.log('📖 Reading G-code file...');
     const gcodeContent = await fs.readFile(gcodeFilePath, 'utf-8');
-
-    if (!gcodeContent || gcodeContent.length === 0) {
-      throw new Error('G-code file is empty');
-    }
 
     console.log('🔍 Parsing G-code (', gcodeContent.length, 'bytes)...');
     const metrics = parseGCode(gcodeContent, config.material);
@@ -164,28 +188,29 @@ export async function sliceModel(
       gcodeFilePath,
       metrics,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ PrusaSlicer slicing failed');
-    console.error('Error type:', error?.constructor?.name);
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
 
-    if (error instanceof Error) {
-      console.error('Error stack:', error.stack);
-    }
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    console.error('Error type:', errorObj.constructor.name);
+    console.error('Error message:', errorObj.message);
+    console.error('Error stack:', errorObj.stack);
 
     // Check for specific error types
     let errorMessage = 'Unknown error during slicing';
 
-    if (error instanceof Error) {
-      if (error.message.includes('ETIMEDOUT') || error.message.includes('timeout')) {
-        errorMessage = `Slicing timeout after ${SLICER_TIMEOUT / 1000}s. Try a simpler model or increase SLICER_TIMEOUT.`;
-      } else if (error.message.includes('ENOENT')) {
-        errorMessage = `PrusaSlicer not found at ${PRUSASLICER_PATH}. Check Docker installation.`;
-      } else if (error.message.includes('not created')) {
-        errorMessage = error.message;
-      } else {
-        errorMessage = error.message;
-      }
+    if (errorObj.message.includes('ETIMEDOUT') || errorObj.message.includes('timeout') || errorObj.message.includes('KILLED')) {
+      errorMessage = `Slicing timeout after ${SLICER_TIMEOUT / 1000}s. Try a simpler model or increase SLICER_TIMEOUT.`;
+    } else if (errorObj.message.includes('ENOENT') && errorObj.message.includes(PRUSASLICER_PATH)) {
+      errorMessage = `PrusaSlicer not found at ${PRUSASLICER_PATH}. Check Docker installation.`;
+    } else if (errorObj.message.includes('EACCES')) {
+      errorMessage = `Permission denied. Check file permissions for PrusaSlicer and input/output paths.`;
+    } else if (errorObj.message.includes('not found or not readable')) {
+      errorMessage = errorObj.message;
+    } else if (errorObj.message.includes('not created')) {
+      errorMessage = errorObj.message;
+    } else {
+      errorMessage = errorObj.message;
     }
 
     // Clean up partial G-code file if it exists
@@ -224,12 +249,16 @@ export async function cleanupOldFiles(ttlHours: number = 24): Promise<void> {
     for (const file of files) {
       if (file.endsWith('.gcode')) {
         const filePath = path.join(TEMP_DIR, file);
-        const stats = await fs.stat(filePath);
-        const age = now - stats.mtimeMs;
+        try {
+          const stats = await fs.stat(filePath);
+          const age = now - stats.mtimeMs;
 
-        if (age > ttlMs) {
-          await fs.unlink(filePath);
-          console.log(`🗑️  Deleted old G-code file: ${file}`);
+          if (age > ttlMs) {
+            await fs.unlink(filePath);
+            console.log(`🗑️ Deleted old G-code file: ${file}`);
+          }
+        } catch (fileError) {
+          console.warn(`Failed to process file ${file}:`, fileError);
         }
       }
     }
@@ -243,7 +272,7 @@ export async function cleanupOldFiles(ttlHours: number = 24): Promise<void> {
  */
 export async function checkPrusaSlicerInstallation(): Promise<boolean> {
   try {
-    const { stdout } = await execAsync(`${PRUSASLICER_PATH} --help`, {
+    const { stdout } = await execFileAsync(PRUSASLICER_PATH, ['--help'], {
       timeout: 5000,
     });
     console.log('✅ PrusaSlicer found:', stdout.substring(0, 100));
