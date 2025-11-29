@@ -1,6 +1,6 @@
 /**
- * CuraEngine Wrapper
- * Handles execution of CuraEngine CLI for 3D model slicing
+ * PrusaSlicer Wrapper
+ * Handles execution of PrusaSlicer CLI for 3D model slicing
  */
 
 import { exec } from 'child_process';
@@ -11,7 +11,7 @@ import { parseGCode, GCodeMetrics } from './gcode-parser';
 
 const execAsync = promisify(exec);
 
-const CURAENGINE_PATH = process.env.CURAENGINE_PATH || 'CuraEngine';
+const PRUSASLICER_PATH = process.env.PRUSASLICER_PATH || process.env.CURAENGINE_PATH || '/usr/local/bin/prusa-slicer';
 const SLICER_TIMEOUT = parseInt(process.env.SLICER_TIMEOUT || '60000', 10); // 60 seconds default
 const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 
@@ -43,7 +43,7 @@ async function ensureTempDir(): Promise<void> {
 /**
  * Generate PrusaSlicer command based on configuration
  */
-function buildCuraCommand(
+function buildPrusaSlicerCommand(
   inputPath: string,
   outputPath: string,
   config: SlicerConfig
@@ -68,7 +68,7 @@ function buildCuraCommand(
 
   // Build PrusaSlicer command with config files and overrides
   const command = [
-    CURAENGINE_PATH,
+    PRUSASLICER_PATH,
     '--export-gcode',
     `"${inputPath}"`,
     '--output', `"${outputPath}"`,
@@ -83,7 +83,7 @@ function buildCuraCommand(
 }
 
 /**
- * Slice a 3D model file using CuraEngine
+ * Slice a 3D model file using PrusaSlicer
  */
 export async function sliceModel(
   inputFilePath: string,
@@ -97,22 +97,22 @@ export async function sliceModel(
   const gcodeFilePath = path.join(TEMP_DIR, gcodeFileName);
 
   try {
-    console.log('🔧 Starting CuraEngine slice...');
+    console.log('🔧 Starting PrusaSlicer slice...');
     console.log('Input:', inputFilePath);
     console.log('Output:', gcodeFilePath);
     console.log('Config:', config);
 
-    const command = buildCuraCommand(inputFilePath, gcodeFilePath, config);
+    const command = buildPrusaSlicerCommand(inputFilePath, gcodeFilePath, config);
     console.log('Command:', command);
 
-    // Execute CuraEngine with timeout
+    // Execute PrusaSlicer with timeout
     const { stdout, stderr } = await execAsync(command, {
       timeout: SLICER_TIMEOUT,
       maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
     });
 
     if (stderr) {
-      console.warn('CuraEngine stderr:', stderr);
+      console.warn('PrusaSlicer stderr:', stderr);
     }
 
     console.log('✅ Slicing completed successfully');
@@ -129,7 +129,7 @@ export async function sliceModel(
       metrics,
     };
   } catch (error) {
-    console.error('❌ CuraEngine slicing failed:', error);
+    console.error('❌ PrusaSlicer slicing failed:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
@@ -183,17 +183,17 @@ export async function cleanupOldFiles(ttlHours: number = 24): Promise<void> {
 }
 
 /**
- * Check if CuraEngine is installed and accessible
+ * Check if PrusaSlicer is installed and accessible
  */
-export async function checkCuraEngineInstallation(): Promise<boolean> {
+export async function checkPrusaSlicerInstallation(): Promise<boolean> {
   try {
-    const { stdout } = await execAsync(`${CURAENGINE_PATH} help`, {
+    const { stdout } = await execAsync(`${PRUSASLICER_PATH} --help`, {
       timeout: 5000,
     });
-    console.log('✅ CuraEngine found:', stdout.substring(0, 100));
+    console.log('✅ PrusaSlicer found:', stdout.substring(0, 100));
     return true;
   } catch (error) {
-    console.error('❌ CuraEngine not found or not executable:', error);
+    console.error('❌ PrusaSlicer not found or not executable:', error);
     return false;
   }
 }

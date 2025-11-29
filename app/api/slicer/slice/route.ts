@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { sliceModel, SlicerConfig, cleanupOldFiles } from '@/lib/curaengine';
+import { sliceModel, SlicerConfig, cleanupOldFiles } from '@/lib/prusaslicer';
 
 const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Slice the model
-    console.log('⚙️  Starting CuraEngine slicing...');
+    console.log('⚙️  Starting PrusaSlicer slicing...');
     const sliceStart = Date.now();
 
     const sliceResult = await sliceModel(tempFilePath, slicerConfig);

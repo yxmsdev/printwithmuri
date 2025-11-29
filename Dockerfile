@@ -1,4 +1,4 @@
-# Uses PrusaSlicer CLI for 3D model slicing
+# PrusaSlicer-based 3D Model Slicing Container
 
 FROM node:20-bullseye-slim AS base
 
@@ -30,7 +30,7 @@ dd if=PrusaSlicer-2.8.1+linux-x64-older-distros-GTK3-202409181354.AppImage bs=1 
     ln -s /opt/PrusaSlicer/usr/bin/prusa-slicer /usr/local/bin/prusa-slicer && \
     rm -rf /tmp/*
 
-# Create CuraEngine wrapper that calls PrusaSlicer
+# Create CuraEngine wrapper for backward compatibility (env var support)
 RUN echo '#!/bin/bash\nexec /usr/local/bin/prusa-slicer "$@"' > /usr/local/bin/CuraEngine && \
     chmod +x /usr/local/bin/CuraEngine
 
@@ -72,15 +72,17 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy CuraEngine from base
+# Copy PrusaSlicer and wrapper from base
+COPY --from=base /usr/local/bin/prusa-slicer /usr/local/bin/prusa-slicer
 COPY --from=base /usr/local/bin/CuraEngine /usr/local/bin/CuraEngine
+COPY --from=base /opt/PrusaSlicer /opt/PrusaSlicer
 
 # Copy Next.js build output
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy config directory for CuraEngine profiles
+# Copy PrusaSlicer config profiles
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 
 # Create temp directory for slicing

@@ -132,7 +132,30 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         return;
       }
 
-      console.log('🎯 File and modelInfo available, starting server-side slicing');
+      // Check if we're in production (server-side slicing available)
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      if (!isProduction) {
+        // In development, skip server slicing and use local estimation
+        console.log('🔧 Development mode: using local estimation only');
+        setIsLoadingPrice(false);
+        const printConfig: PrintConfig = {
+          modelId: 'temp',
+          quantity: quantity,
+          quality: quality.toLowerCase() as 'draft' | 'standard' | 'high' | 'ultra',
+          material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
+          color: selectedColor.value,
+          infillType: infillType.toLowerCase() as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
+          infillDensity: infillDensity,
+          designGuideImages: [],
+        };
+        const localPrice = calculatePrice(printConfig, modelInfo);
+        console.log('📊 Local price calculated:', localPrice);
+        setPriceBreakdown({ ...localPrice, source: 'local-estimation' });
+        return;
+      }
+
+      console.log('🎯 Production mode: attempting server-side slicing');
 
       setIsLoadingPrice(true);
       setPriceError(null);

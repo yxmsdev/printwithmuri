@@ -1,6 +1,6 @@
 /**
  * G-code Parser
- * Extracts print metrics from sliced G-code files
+ * Extracts print metrics from PrusaSlicer generated G-code files
  */
 
 export interface GCodeMetrics {
@@ -37,20 +37,31 @@ export function parseGCode(gcodeContent: string, material: string): GCodeMetrics
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Extract print time from Cura comment (;TIME:)
-    if (trimmed.startsWith(';TIME:')) {
-      const timeMatch = trimmed.match(/;TIME:(\d+)/);
+    // Extract print time from PrusaSlicer comment (; estimated printing time)
+    if (trimmed.includes('estimated printing time')) {
+      // Format: "; estimated printing time (normal mode) = 1h 23m 45s"
+      const timeMatch = trimmed.match(/(\d+)h\s*(\d+)m\s*(\d+)s/);
       if (timeMatch) {
-        printTimeSeconds = parseInt(timeMatch[1], 10);
+        const hours = parseInt(timeMatch[1], 10);
+        const minutes = parseInt(timeMatch[2], 10);
+        const seconds = parseInt(timeMatch[3], 10);
+        printTimeSeconds = hours * 3600 + minutes * 60 + seconds;
+      } else {
+        // Try format: "1h 23m" or "45m 30s"
+        const hm = trimmed.match(/(\d+)h\s*(\d+)m/);
+        const ms = trimmed.match(/(\d+)m\s*(\d+)s/);
+        if (hm) {
+          printTimeSeconds = parseInt(hm[1], 10) * 3600 + parseInt(hm[2], 10) * 60;
+        } else if (ms) {
+          printTimeSeconds = parseInt(ms[1], 10) * 60 + parseInt(ms[2], 10);
+        }
       }
     }
 
-    // Extract layer count from Cura comment (;LAYER_COUNT:)
-    if (trimmed.startsWith(';LAYER_COUNT:')) {
-      const layerMatch = trimmed.match(/;LAYER_COUNT:(\d+)/);
-      if (layerMatch) {
-        layerCount = parseInt(layerMatch[1], 10);
-      }
+    // Count layers from PrusaSlicer layer change comments
+    // PrusaSlicer uses ";LAYER_CHANGE" or "; layer 1, Z = 0.200"
+    if (trimmed.startsWith(';LAYER_CHANGE') || trimmed.startsWith('; layer ')) {
+      layerCount++;
     }
 
     // Track extrusion (E value) to calculate filament length
