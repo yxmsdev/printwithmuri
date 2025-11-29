@@ -169,10 +169,17 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         formData.append('material', material);
         formData.append('infillDensity', infillDensity.toString());
 
+        // Add timeout for large models (2 minutes)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
         const response = await fetch('/api/slicer/slice', {
           method: 'POST',
           body: formData,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         console.log('📥 Slice response status:', response.status);
 
@@ -204,7 +211,13 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         setPriceBreakdown(slicedPricing);
       } catch (error) {
         console.error('❌ Server slicing error:', error);
-        setPriceError(error instanceof Error ? error.message : 'Failed to slice model');
+
+        // Handle timeout specifically
+        if (error instanceof Error && error.name === 'AbortError') {
+          setPriceError('Slicing timeout - model is too complex. Using local estimation.');
+        } else {
+          setPriceError(error instanceof Error ? error.message : 'Failed to slice model');
+        }
 
         // Fallback to local pricing
         const printConfig: PrintConfig = {

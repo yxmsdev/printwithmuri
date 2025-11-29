@@ -78,6 +78,14 @@ function buildPrusaSlicerCommand(
     '--load', printProfile,
     '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
+    // Enable supports for better print quality
+    '--support-material', '1',
+    '--support-material-auto', '1',
+    '--support-material-threshold', '45', // Auto-generate supports for overhangs > 45°
+    // Enable brim for better bed adhesion
+    '--brim-width', '5', // 5mm brim
+    '--skirts', '1', // Number of skirt loops
+    '--skirt-distance', '6', // Distance from object (mm)
   ].join(' ');
 
   return command;
