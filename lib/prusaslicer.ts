@@ -67,14 +67,15 @@ function buildPrusaSlicerCommand(
   const layerHeight = layerHeights[quality];
 
   // Build PrusaSlicer command with config files and overrides
+  // Note: Removed quotes around paths - they cause shell parsing issues
   const command = [
     PRUSASLICER_PATH,
     '--export-gcode',
-    `"${inputPath}"`,
-    '--output', `"${outputPath}"`,
-    '--load', `"${printerProfile}"`,
-    '--load', `"${filamentProfile}"`,
-    '--load', `"${printProfile}"`,
+    inputPath,
+    '--output', outputPath,
+    '--load', printerProfile,
+    '--load', filamentProfile,
+    '--load', printProfile,
     '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
   ].join(' ');
@@ -100,28 +101,55 @@ export async function sliceModel(
     console.log('🔧 Starting PrusaSlicer slice...');
     console.log('Input:', inputFilePath);
     console.log('Output:', gcodeFilePath);
-    console.log('Config:', config);
+    console.log('Config:', JSON.stringify(config));
+    console.log('PrusaSlicer Path:', PRUSASLICER_PATH);
+    console.log('Timeout:', SLICER_TIMEOUT, 'ms');
 
     const command = buildPrusaSlicerCommand(inputFilePath, gcodeFilePath, config);
-    console.log('Command:', command);
+    console.log('Full Command:', command);
 
     // Execute PrusaSlicer with timeout
+    console.log('⏳ Executing PrusaSlicer (this may take up to', SLICER_TIMEOUT / 1000, 'seconds)...');
+    const execStart = Date.now();
+
     const { stdout, stderr } = await execAsync(command, {
       timeout: SLICER_TIMEOUT,
       maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
     });
 
-    if (stderr) {
-      console.warn('PrusaSlicer stderr:', stderr);
+    const execDuration = Date.now() - execStart;
+    console.log('⏱️ PrusaSlicer execution took', execDuration, 'ms');
+
+    if (stdout) {
+      console.log('PrusaSlicer stdout:', stdout);
     }
 
-    console.log('✅ Slicing completed successfully');
+    if (stderr) {
+      console.warn('PrusaSlicer stderr:', stderr);
+      // Note: Some tools output info to stderr, so this is a warning not an error
+    }
+
+    // Verify G-code file was created
+    try {
+      const stats = await fs.stat(gcodeFilePath);
+      console.log('✅ G-code file created:', gcodeFilePath, `(${stats.size} bytes)`);
+    } catch (statError) {
+      throw new Error(`G-code file was not created at ${gcodeFilePath}. PrusaSlicer may have failed silently.`);
+    }
 
     // Read and parse the generated G-code
+    console.log('📖 Reading G-code file...');
     const gcodeContent = await fs.readFile(gcodeFilePath, 'utf-8');
+
+    if (!gcodeContent || gcodeContent.length === 0) {
+      throw new Error('G-code file is empty');
+    }
+
+    console.log('🔍 Parsing G-code (', gcodeContent.length, 'bytes)...');
     const metrics = parseGCode(gcodeContent, config.material);
 
-    console.log('📊 Metrics:', metrics);
+    console.log('📊 Parsed metrics:', JSON.stringify(metrics));
+    console.log('✅ Slicing completed successfully');
 
     return {
       success: true,
@@ -129,13 +157,33 @@ export async function sliceModel(
       metrics,
     };
   } catch (error) {
-    console.error('❌ PrusaSlicer slicing failed:', error);
+    console.error('❌ PrusaSlicer slicing failed');
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
 
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack);
+    }
+
+    // Check for specific error types
+    let errorMessage = 'Unknown error during slicing';
+
+    if (error instanceof Error) {
+      if (error.message.includes('ETIMEDOUT') || error.message.includes('timeout')) {
+        errorMessage = `Slicing timeout after ${SLICER_TIMEOUT / 1000}s. Try a simpler model or increase SLICER_TIMEOUT.`;
+      } else if (error.message.includes('ENOENT')) {
+        errorMessage = `PrusaSlicer not found at ${PRUSASLICER_PATH}. Check Docker installation.`;
+      } else if (error.message.includes('not created')) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.message;
+      }
+    }
 
     // Clean up partial G-code file if it exists
     try {
       await fs.unlink(gcodeFilePath);
+      console.log('🗑️ Cleaned up partial G-code file');
     } catch {
       // Ignore cleanup errors
     }

@@ -30,11 +30,17 @@ const SETUP_FEE = 500; // ₦500
  * - infillDensity: number (5-100)
  */
 export async function POST(request: NextRequest) {
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`\n${'='.repeat(80)}`);
+  console.log(`🆕 NEW SLICE REQUEST [${requestId}]`);
+  console.log(`${'='.repeat(80)}\n`);
+
   try {
     // Cleanup old files before processing (async, don't wait)
-    cleanupOldFiles(24).catch(err => console.error('Cleanup error:', err));
+    cleanupOldFiles(24).catch(err => console.error(`[${requestId}] Cleanup error:`, err));
 
     // Get the file and configuration from the request
+    console.log(`[${requestId}] 📥 Parsing form data...`);
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const quality = formData.get('quality') as string;
@@ -43,6 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!file) {
+      console.error(`[${requestId}] ❌ Validation failed: No file provided`);
       return NextResponse.json(
         { error: 'No file provided' },
         { status: 400 }
@@ -50,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!quality || !['draft', 'standard', 'high', 'ultra'].includes(quality)) {
+      console.error(`[${requestId}] ❌ Validation failed: Invalid quality:`, quality);
       return NextResponse.json(
         { error: 'Valid quality is required (draft, standard, high, ultra)' },
         { status: 400 }
@@ -57,6 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!material || !['PLA', 'PETG', 'ABS', 'Resin'].includes(material)) {
+      console.error(`[${requestId}] ❌ Validation failed: Invalid material:`, material);
       return NextResponse.json(
         { error: 'Valid material is required (PLA, PETG, ABS, Resin)' },
         { status: 400 }
@@ -65,6 +74,7 @@ export async function POST(request: NextRequest) {
 
     const infillDensityNum = parseFloat(infillDensity);
     if (isNaN(infillDensityNum) || infillDensityNum < 5 || infillDensityNum > 100) {
+      console.error(`[${requestId}] ❌ Validation failed: Invalid infill density:`, infillDensity);
       return NextResponse.json(
         { error: 'infillDensity must be between 5 and 100' },
         { status: 400 }
@@ -76,19 +86,22 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
 
     if (!allowedExtensions.includes(fileExtension)) {
+      console.error(`[${requestId}] ❌ Validation failed: Invalid file type:`, fileExtension);
       return NextResponse.json(
         { error: `Unsupported file type. Allowed: ${allowedExtensions.join(', ')}` },
         { status: 400 }
       );
     }
 
-    console.log('🔵 Starting slice operation...');
-    console.log('File:', file.name, `(${file.size} bytes)`);
-    console.log('Quality:', quality);
-    console.log('Material:', material);
-    console.log('Infill:', infillDensity + '%');
+    console.log(`[${requestId}] ✅ Validation passed`);
+    console.log(`[${requestId}] 🔵 Starting slice operation...`);
+    console.log(`[${requestId}]   File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+    console.log(`[${requestId}]   Quality: ${quality}`);
+    console.log(`[${requestId}]   Material: ${material}`);
+    console.log(`[${requestId}]   Infill: ${infillDensity}%`);
 
     // Ensure temp directory exists
+    console.log(`[${requestId}] 📁 Ensuring temp directory exists: ${TEMP_DIR}`);
     await fs.mkdir(TEMP_DIR, { recursive: true });
 
     // Save uploaded file to temp directory
@@ -97,11 +110,11 @@ export async function POST(request: NextRequest) {
     const tempFileName = `model-${timestamp}-${randomId}${fileExtension}`;
     const tempFilePath = path.join(TEMP_DIR, tempFileName);
 
+    console.log(`[${requestId}] 💾 Saving uploaded file to: ${tempFilePath}`);
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     await fs.writeFile(tempFilePath, buffer);
-
-    console.log('📁 File saved to:', tempFilePath);
+    console.log(`[${requestId}] ✅ File saved successfully`);
 
     // Configure slicing settings
     const slicerConfig: SlicerConfig = {
@@ -111,23 +124,24 @@ export async function POST(request: NextRequest) {
     };
 
     // Slice the model
-    console.log('⚙️  Starting PrusaSlicer slicing...');
+    console.log(`[${requestId}] ⚙️  Invoking PrusaSlicer...`);
     const sliceStart = Date.now();
 
     const sliceResult = await sliceModel(tempFilePath, slicerConfig);
 
     const sliceDuration = Date.now() - sliceStart;
-    console.log(`⏱️  Slicing took ${(sliceDuration / 1000).toFixed(1)}s`);
+    console.log(`[${requestId}] ⏱️  Slicing operation took ${(sliceDuration / 1000).toFixed(1)}s`);
 
     // Clean up input file
     try {
       await fs.unlink(tempFilePath);
-      console.log('🗑️  Cleaned up input file');
+      console.log(`[${requestId}] 🗑️  Cleaned up input file`);
     } catch (error) {
-      console.warn('Failed to cleanup input file:', error);
+      console.warn(`[${requestId}] ⚠️  Failed to cleanup input file:`, error);
     }
 
     if (!sliceResult.success) {
+      console.error(`[${requestId}] ❌ Slicing failed:`, sliceResult.error);
       return NextResponse.json(
         {
           error: 'Slicing failed',
@@ -136,6 +150,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    console.log(`[${requestId}] ✅ Slicing succeeded`);
 
     // Calculate pricing based on sliced metrics
     const { metrics } = sliceResult;
@@ -148,15 +164,15 @@ export async function POST(request: NextRequest) {
     // Generate quote ID
     const quoteId = `quote-${timestamp}-${randomId}`;
 
-    console.log('💰 Pricing calculated:');
-    console.log(`  Weight: ${metrics.filamentWeightGrams.toFixed(2)}g`);
-    console.log(`  Time: ${metrics.printTimeHours.toFixed(2)}h`);
-    console.log(`  Material Cost: ₦${materialCost.toFixed(2)}`);
-    console.log(`  Machine Cost: ₦${machineCost.toFixed(2)}`);
-    console.log(`  Total: ₦${itemTotal.toFixed(2)}`);
+    console.log(`[${requestId}] 💰 Pricing calculated:`);
+    console.log(`[${requestId}]   Weight: ${metrics.filamentWeightGrams.toFixed(2)}g`);
+    console.log(`[${requestId}]   Time: ${metrics.printTimeHours.toFixed(2)}h`);
+    console.log(`[${requestId}]   Material Cost: ₦${materialCost.toFixed(2)}`);
+    console.log(`[${requestId}]   Machine Cost: ₦${machineCost.toFixed(2)}`);
+    console.log(`[${requestId}]   Total: ₦${itemTotal.toFixed(2)}`);
 
     // Return formatted quote
-    return NextResponse.json({
+    const response = {
       success: true,
       quote: {
         quote_id: quoteId,
@@ -171,10 +187,23 @@ export async function POST(request: NextRequest) {
         slicingDuration: sliceDuration,
         layerCount: metrics.layerCount,
       }
-    });
+    };
+
+    console.log(`[${requestId}] 🎉 Slice request completed successfully`);
+    console.log(`[${requestId}] Quote ID: ${quoteId}\n`);
+
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Error in slicer slice route:', error);
+    console.error(`[${requestId}] ❌ Fatal error in slicer route:`);
+    console.error(`[${requestId}] Error type:`, error?.constructor?.name);
+    console.error(`[${requestId}] Error message:`, error instanceof Error ? error.message : String(error));
+
+    if (error instanceof Error && error.stack) {
+      console.error(`[${requestId}] Stack trace:`, error.stack);
+    }
+
+    console.log(`${'='.repeat(80)}\n`);
 
     return NextResponse.json(
       {
