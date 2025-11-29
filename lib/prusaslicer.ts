@@ -11,7 +11,7 @@ import { parseGCode, GCodeMetrics } from './gcode-parser';
 
 const execFileAsync = promisify(execFile);
 
-const PRUSASLICER_PATH = process.env.PRUSASLICER_PATH || process.env.CURAENGINE_PATH || '/usr/local/bin/prusa-slicer';
+const PRUSASLICER_PATH = process.env.PRUSASLICER_PATH || '/usr/local/bin/prusa-slicer';
 const SLICER_TIMEOUT = parseInt(process.env.SLICER_TIMEOUT || '60000', 10); // 60 seconds default
 const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 
@@ -92,14 +92,14 @@ async function buildPrusaSlicerArgs(
     '--load', printProfile,
     '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
-    // Enable supports for better print quality
-    '--support-material', '1',
-    '--support-material-auto', '1',
-    '--support-material-threshold', '45', // Auto-generate supports for overhangs > 45°
+    // Enable supports for better print quality (use = syntax to avoid ambiguity)
+    '--support-material=1',
+    '--support-material-auto=1',
+    '--support-material-threshold=45', // Auto-generate supports for overhangs > 45°
     // Enable brim for better bed adhesion
-    '--brim-width', '5', // 5mm brim
-    '--skirts', '1', // Number of skirt loops
-    '--skirt-distance', '6', // Distance from object (mm)
+    '--brim-width=5', // 5mm brim
+    '--skirts=1', // Number of skirt loops
+    '--skirt-distance=6', // Distance from object (mm)
     // Input file must be last
     inputPath,
   ];
