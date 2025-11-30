@@ -19,17 +19,40 @@ const MACHINE_COST_PER_HOUR = 2000; // ₦2000/hour
 // Setup fee per unique model
 const SETUP_FEE = 500; // ₦500
 
-/**
- * POST /api/slicer/slice
- * Unified endpoint for slicing 3D models and generating quotes
- *
- * Request body (multipart/form-data):
- * - file: 3D model file (STL, OBJ, etc.)
- * - quality: 'draft' | 'standard' | 'high' | 'ultra'
- * - material: 'PLA' | 'PETG' | 'ABS' | 'Resin'
- * - infillDensity: number (5-100)
- */
+let isSlicing = false;
+const sliceQueue: {
+  resolve: (value: any) => void;
+  reject: (reason?: any) => void;
+  request: NextRequest;
+}[] = [];
+
+async function processQueue() {
+  if (isSlicing || sliceQueue.length === 0) {
+    return;
+  }
+
+  isSlicing = true;
+  const { resolve, reject, request } = sliceQueue.shift()!;
+
+  try {
+    const result = await handleSlicing(request);
+    resolve(result);
+  } catch (error) {
+    reject(error);
+  } finally {
+    isSlicing = false;
+    processQueue();
+  }
+}
+
 export async function POST(request: NextRequest) {
+  return new Promise((resolve, reject) => {
+    sliceQueue.push({ resolve, reject, request });
+    processQueue();
+  });
+}
+
+async function handleSlicing(request: NextRequest) {
   const requestId = Math.random().toString(36).substring(7);
   const requestStartTime = Date.now();
 
