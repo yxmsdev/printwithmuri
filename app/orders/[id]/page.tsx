@@ -44,7 +44,7 @@ export default function OrderDetailPage() {
             <p className="text-[14px] text-[#7A7A7A] mb-8">This order doesn&apos;t exist or has been removed.</p>
             <Link
               href="/orders"
-              className="px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="rounded-[2px] px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}
@@ -125,7 +125,7 @@ export default function OrderDetailPage() {
                         }`}
                       >
                         {isCompleted && !isCurrent && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="rounded-[2px] text-white">
                             <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
@@ -175,7 +175,7 @@ export default function OrderDetailPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="flex gap-4 pb-4 border-b border-[#E6E6E6] last:border-0 last:pb-0">
                     {/* Model Preview Placeholder */}
-                    <div className="w-16 h-16 bg-[#FAFAFA] rounded flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-[#FAFAFA] rounded-[2px] flex items-center justify-center flex-shrink-0">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" strokeWidth="1.5">
                         <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
                         <polyline points="3.27 6.96 12 12.01 20.73 6.96" />

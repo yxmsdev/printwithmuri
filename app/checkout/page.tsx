@@ -110,7 +110,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-[calc(100vh-56px)] flex flex-col items-center justify-center bg-[#EDEDED] p-8">
-        <div className="bg-white p-8 rounded-lg shadow-sm text-center max-w-md">
+        <div className="bg-white p-8 rounded-[2px] shadow-sm text-center max-w-md">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 text-[#8D8D8D]">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2"/>
@@ -120,7 +120,7 @@ export default function CheckoutPage() {
           <p className="text-[14px] text-[#8D8D8D] mb-6">Add some items to your bag before checking out.</p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px]"
+            className="rounded-[2px] inline-block px-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px]"
             style={{ background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)' }}
           >
             Start Shopping
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
             {/* Left Column - Shipping & Payment */}
             <div className="lg:col-span-2 space-y-6">
               {/* Shipping Address */}
-              <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="bg-white p-6 rounded-[2px] shadow-sm">
                 <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-6">Shipping Address</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -269,7 +269,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Payment Method */}
-              <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="bg-white p-6 rounded-[2px] shadow-sm">
                 <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-6">Payment Method</h2>
                 
                 <div className="space-y-3">
@@ -288,8 +288,8 @@ export default function CheckoutPage() {
                       <p className="text-[12px] text-[#8D8D8D]">Pay with card, bank transfer, or USSD</p>
                     </div>
                     <div className="flex gap-2">
-                      <div className="w-8 h-5 bg-[#EFEFEF] rounded flex items-center justify-center text-[8px] font-bold text-[#8D8D8D]">VISA</div>
-                      <div className="w-8 h-5 bg-[#EFEFEF] rounded flex items-center justify-center text-[8px] font-bold text-[#8D8D8D]">MC</div>
+                      <div className="w-8 h-5 bg-[#EFEFEF] rounded-[2px] flex items-center justify-center text-[8px] font-bold text-[#8D8D8D]">VISA</div>
+                      <div className="w-8 h-5 bg-[#EFEFEF] rounded-[2px] flex items-center justify-center text-[8px] font-bold text-[#8D8D8D]">MC</div>
                     </div>
                   </label>
 
@@ -330,14 +330,14 @@ export default function CheckoutPage() {
 
             {/* Right Column - Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white p-6 rounded-lg shadow-sm sticky top-24">
+              <div className="bg-white p-6 rounded-[2px] shadow-sm sticky top-24">
                 <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-6">Order Summary</h2>
                 
                 {/* Items */}
                 <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3 pb-4 border-b border-[#E6E6E6]">
-                      <div className="w-16 h-16 bg-[#EFEFEF] rounded flex items-center justify-center flex-shrink-0">
+                      <div className="w-16 h-16 bg-[#EFEFEF] rounded-[2px] flex items-center justify-center flex-shrink-0">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#8D8D8D]">
                           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -374,7 +374,7 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="w-full mt-6 py-4 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-[2px] w-full mt-6 py-4 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)' }}
                 >
                   {isProcessing ? (

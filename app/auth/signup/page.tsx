@@ -60,7 +60,7 @@ export default function SignUpPage() {
             </p>
             <Link
               href="/auth/login"
-              className="inline-block px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="rounded-[2px] inline-block px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}
@@ -83,7 +83,7 @@ export default function SignUpPage() {
           </p>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-[2px]">
               <p className="text-[14px] text-red-600">{error}</p>
             </div>
           )}
@@ -152,7 +152,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 disabled:opacity-50"
+              className="rounded-[2px] w-full py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 disabled:opacity-50"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import ComingSoonContent from '@/components/layout/ComingSoonContent';
 import BagModal from '@/components/bag/BagModal';
@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [comingSoonType, setComingSoonType] = useState<'paper' | 'merch'>('paper');
@@ -46,19 +47,40 @@ const Header = () => {
   }, []);
 
   const handleOpenComingSoon = (type: 'paper' | 'merch') => {
+    closeBag(); // Close bag when opening coming soon modal
     setComingSoonType(type);
     setShowComingSoon(true);
   };
 
   const handleSignOut = async () => {
+    closeBag(); // Close bag when signing out
     await signOut();
     setShowAccountMenu(false);
     router.push('/');
   };
 
   const handleSignIn = () => {
+    closeBag(); // Close bag when navigating to sign in
     setShowAccountMenu(false);
     router.push('/auth/login');
+  };
+
+  const handle3DClick = (e: React.MouseEvent) => {
+    closeBag(); // Close bag when navigating
+    // If we're already on the home page, trigger a reset
+    if (pathname === '/') {
+      e.preventDefault();
+      router.push('/?reset=' + Date.now());
+    }
+    // Otherwise, let the Link navigate normally
+  };
+
+  const handleDraftsClick = () => {
+    closeBag(); // Close bag when navigating to drafts
+  };
+
+  const handleLogoClick = () => {
+    closeBag(); // Close bag when clicking logo
   };
 
   return (
@@ -69,26 +91,27 @@ const Header = () => {
           <nav className="flex items-center gap-4">
             <Link
               href="/"
+              onClick={handle3DClick}
               className="text-[#F4008A] font-medium text-[13px] uppercase hover:opacity-80 transition-opacity leading-[1.37]"
             >
               3D
             </Link>
             <button
               onClick={() => handleOpenComingSoon('paper')}
-              className="text-[#B7B7B7] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+              className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
             >
               PAPER
             </button>
             <button
               onClick={() => handleOpenComingSoon('merch')}
-              className="text-[#B7B7B7] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+              className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
             >
               MERCH
             </button>
           </nav>
 
           {/* Center: Logo */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          <Link href="/" onClick={handleLogoClick} className="absolute left-1/2 -translate-x-1/2">
             <Image
               src="/images/logo.svg"
               alt="Print with Muri"
@@ -102,16 +125,17 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <Link
               href="/drafts"
-              className="text-[#1F1F1F] font-medium text-[13px] uppercase hover:text-[#F4008A] transition-colors leading-[1.37]"
+              onClick={handleDraftsClick}
+              className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
             >
               DRAFTS({draftCount})
             </Link>
-            
+
             {/* Bag Button with Dropdown */}
             <div className="relative">
               <button
                 onClick={() => showBag ? closeBag() : openBag()}
-                className="text-[#1F1F1F] font-medium text-[13px] uppercase hover:text-[#F4008A] transition-colors leading-[1.37]"
+                className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
               >
                 BAG({bagCount})
               </button>
@@ -119,8 +143,11 @@ const Header = () => {
             
             {/* Account Button with Dropdown */}
             <div className="relative" ref={accountMenuRef}>
-              <button 
-                onClick={() => setShowAccountMenu(!showAccountMenu)}
+              <button
+                onClick={() => {
+                  closeBag(); // Close bag when opening account menu
+                  setShowAccountMenu(!showAccountMenu);
+                }}
                 className="w-8 h-8 hover:opacity-80 transition-opacity"
               >
                 <Image
@@ -133,7 +160,7 @@ const Header = () => {
 
               {/* Account Dropdown Menu */}
               {showAccountMenu && (
-                <div className="absolute right-0 top-full mt-2 bg-white rounded-[4px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[160px]">
+                <div className="absolute right-0 top-full mt-2 bg-white rounded-[2px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[160px]">
                   {/* User Info */}
                   <div className="px-6 py-2 border-b border-[#B7B7B7]/50">
                     <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none truncate max-w-[140px]">
@@ -156,7 +183,10 @@ const Header = () => {
                       {/* My Orders */}
                       <Link
                         href="/orders"
-                        onClick={() => setShowAccountMenu(false)}
+                        onClick={() => {
+                          closeBag();
+                          setShowAccountMenu(false);
+                        }}
                         className="block w-full px-3 py-2 rounded-[2px] text-[13px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
                       >
                         My Orders
@@ -165,7 +195,10 @@ const Header = () => {
                       {/* Support */}
                       <Link
                         href="/support"
-                        onClick={() => setShowAccountMenu(false)}
+                        onClick={() => {
+                          closeBag();
+                          setShowAccountMenu(false);
+                        }}
                         className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
                       >
                         Support
@@ -194,7 +227,10 @@ const Header = () => {
                       {/* Sign Up */}
                       <Link
                         href="/auth/signup"
-                        onClick={() => setShowAccountMenu(false)}
+                        onClick={() => {
+                          closeBag();
+                          setShowAccountMenu(false);
+                        }}
                         className="block w-full px-3 py-2 text-[13px] font-medium text-[#F4008A] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
                       >
                         Sign Up

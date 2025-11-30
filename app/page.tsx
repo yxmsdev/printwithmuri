@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import FileUpload from "@/components/ui/FileUpload";
 import ConfiguratorSidebar, { ConfiguratorSidebarRef, ConfigState } from "@/components/configurator/ConfiguratorSidebar";
-import { ModelInfo } from '@/types';
+import { ModelInfo, SlicerQuoteResponse } from '@/types';
 import { useDraftsStore, createDraftData } from '@/stores/useDraftsStore';
 
 const ModelViewer = dynamic(() => import("@/components/viewer/ModelViewer"), {
@@ -30,41 +30,67 @@ export default function Home() {
   const [initialConfig, setInitialConfig] = useState<Partial<ConfigState> | undefined>(undefined);
   const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null);
   const [showDraftSaved, setShowDraftSaved] = useState(false);
+  const [initialSliceResults, setInitialSliceResults] = useState<SlicerQuoteResponse | null>(null);
 
   const getDraft = useDraftsStore((state) => state.getDraft);
   const addDraft = useDraftsStore((state) => state.addDraft);
   const updateDraft = useDraftsStore((state) => state.updateDraft);
   const removeDraft = useDraftsStore((state) => state.removeDraft);
 
-  // Load draft from URL parameter
+  // Load draft from URL parameter OR handle reset
   useEffect(() => {
     const draftId = searchParams.get('draft');
+    const reset = searchParams.get('reset');
+
+    // Handle reset request (from clicking "3D" in header)
+    if (reset) {
+      console.log('🔄 Resetting to FileUpload modal');
+
+      // Clean up old URL if it exists
+      if (selectedFile?.url) {
+        URL.revokeObjectURL(selectedFile.url);
+      }
+
+      // Reset all state
+      setSelectedFile(null);
+      setModelInfo(null);
+      setInitialConfig(undefined);
+      setLoadedDraftId(null);
+      setInitialSliceResults(null);
+
+      // Clear the URL parameter
+      router.replace('/', { scroll: false });
+      return;
+    }
+
+    // Handle draft loading
     if (draftId) {
       const draft = getDraft(draftId);
       if (draft) {
         setLoadedDraftId(draftId);
         setInitialConfig(draft.config);
         setModelInfo(draft.modelInfo);
-        
+
         // Set file info (without actual file for now - just display name)
         setSelectedFile({
           url: '', // No actual URL - model won't load from draft
           name: draft.modelName,
         });
-        
+
         // Clear the URL parameter
         router.replace('/', { scroll: false });
       }
     }
-  }, [searchParams, getDraft, router]);
+  }, [searchParams, getDraft, router, selectedFile]);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = (file: File, sliceResults: SlicerQuoteResponse) => {
     // Clean up old URL if it exists
     if (selectedFile?.url) {
       URL.revokeObjectURL(selectedFile.url);
     }
     const url = URL.createObjectURL(file);
     setSelectedFile({ url, name: file.name, file });
+    setInitialSliceResults(sliceResults);
 
     // Clear loaded draft since we have a new file
     setLoadedDraftId(null);
@@ -113,7 +139,7 @@ export default function Home() {
     <div className="relative w-full h-[calc(100vh-56px)]">
       {/* Draft Saved Toast */}
       {showDraftSaved && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F1F1F] text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F1F1F] text-white px-6 py-3 rounded-[2px] shadow-lg animate-fade-in">
           <div className="flex items-center gap-2">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-green-400">
               <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -150,6 +176,7 @@ export default function Home() {
               file={selectedFile.file}
               modelInfo={modelInfo}
               initialConfig={initialConfig}
+              initialSliceResults={initialSliceResults}
               onChangeFile={(file: File) => {
                 // Clean up old URL
                 if (selectedFile?.url) {
@@ -158,6 +185,7 @@ export default function Home() {
                 const url = URL.createObjectURL(file);
                 setSelectedFile({ url, name: file.name, file });
                 setModelInfo(null); // Reset model info until new model loads
+                setInitialSliceResults(null); // Clear slice results since file changed
                 setLoadedDraftId(null); // Clear draft since file changed
                 setInitialConfig(undefined);
               }}

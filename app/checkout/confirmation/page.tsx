@@ -23,7 +23,7 @@ export default function OrderConfirmationPage() {
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center bg-[#EDEDED] p-8">
-      <div className="bg-white p-8 rounded-lg shadow-sm text-center max-w-lg w-full">
+      <div className="bg-white p-8 rounded-[2px] shadow-sm text-center max-w-lg w-full">
         {/* Success Icon */}
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-green-600">
@@ -37,7 +37,7 @@ export default function OrderConfirmationPage() {
         </p>
 
         {/* Order Number */}
-        <div className="bg-[#EFEFEF] p-4 rounded mb-6">
+        <div className="bg-[#EFEFEF] p-4 rounded-[2px] mb-6">
           <p className="text-[12px] text-[#8D8D8D] mb-1">Order Number</p>
           <p className="text-[18px] font-medium text-[#1F1F1F] font-mono">
             {order?.orderNumber || 'Loading...'}
@@ -46,7 +46,7 @@ export default function OrderConfirmationPage() {
 
         {/* Order Summary */}
         {order && (
-          <div className="bg-[#FAFAFA] p-4 rounded mb-6 text-left">
+          <div className="bg-[#FAFAFA] p-4 rounded-[2px] mb-6 text-left">
             <div className="flex justify-between text-[13px] mb-2">
               <span className="text-[#8D8D8D]">Items</span>
               <span className="text-[#1F1F1F]">{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</span>
@@ -68,7 +68,7 @@ export default function OrderConfirmationPage() {
           <div className="space-y-4">
             <div className="flex gap-3">
               <div className="w-6 h-6 bg-[#F4008A] rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-bold text-white">1</span>
+                <span className="rounded-[2px] text-[10px] font-bold text-white">1</span>
               </div>
               <div>
                 <p className="text-[13px] font-medium text-[#1F1F1F]">Order Review</p>
@@ -77,7 +77,7 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="flex gap-3">
               <div className="w-6 h-6 bg-[#F4008A] rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-bold text-white">2</span>
+                <span className="rounded-[2px] text-[10px] font-bold text-white">2</span>
               </div>
               <div>
                 <p className="text-[13px] font-medium text-[#1F1F1F]">Production</p>
@@ -86,7 +86,7 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="flex gap-3">
               <div className="w-6 h-6 bg-[#F4008A] rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-bold text-white">3</span>
+                <span className="rounded-[2px] text-[10px] font-bold text-white">3</span>
               </div>
               <div>
                 <p className="text-[13px] font-medium text-[#1F1F1F]">Shipping</p>
@@ -97,7 +97,7 @@ export default function OrderConfirmationPage() {
         </div>
 
         {/* Confirmation Email Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6 text-left">
+        <div className="bg-blue-50 border border-blue-200 rounded-[2px] p-4 mb-6 text-left">
           <div className="flex gap-3">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-blue-600 flex-shrink-0 mt-0.5">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -114,14 +114,14 @@ export default function OrderConfirmationPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href={order ? `/orders/${order.id}` : '/orders'}
-            className="flex-1 py-3 px-6 text-[14px] font-medium text-white uppercase tracking-[0.28px] text-center transition-all hover:opacity-90"
+            className="rounded-[2px] flex-1 py-3 px-6 text-[14px] font-medium text-white uppercase tracking-[0.28px] text-center transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)' }}
           >
             Track Order
           </Link>
           <Link
             href="/"
-            className="flex-1 py-3 px-6 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] text-center border border-[#1F1F1F] hover:bg-[#1F1F1F] hover:text-white transition-all"
+            className="rounded-[2px] flex-1 py-3 px-6 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] text-center border border-[#1F1F1F] hover:bg-[#1F1F1F] hover:text-white transition-all"
           >
             Continue Shopping
           </Link>

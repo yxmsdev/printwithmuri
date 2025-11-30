@@ -28,7 +28,7 @@ const Select: React.FC<SelectProps> = ({
       <select
         className={`
           w-full px-4 py-3
-          border-2 rounded-lg
+          border-2 rounded-[2px]
           ${error ? 'border-error' : 'border-gray-300'}
           focus:outline-none focus:border-primary
           transition-colors

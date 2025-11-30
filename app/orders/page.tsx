@@ -27,7 +27,7 @@ export default function OrdersPage() {
             </div>
             <Link
               href="/"
-              className="px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="rounded-[2px] px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}
@@ -50,7 +50,7 @@ export default function OrdersPage() {
             </p>
             <Link
               href="/"
-              className="px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="rounded-[2px] px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}
@@ -76,7 +76,7 @@ export default function OrdersPage() {
           </div>
           <Link
             href="/"
-            className="px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+            className="rounded-[2px] px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
             style={{
               background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
             }}
@@ -110,7 +110,7 @@ export default function OrdersPage() {
                 >
                   {/* Order ID */}
                   <div className="w-[200px] flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#FAFAFA] rounded flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 bg-[#FAFAFA] rounded-[2px] flex items-center justify-center flex-shrink-0">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" strokeWidth="1.5">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                         <line x1="3" y1="6" x2="21" y2="6" />
@@ -154,7 +154,7 @@ export default function OrdersPage() {
                   <div className="w-[120px] flex items-center justify-center">
                     <Link
                       href={`/orders/${order.id}`}
-                      className="px-6 py-3 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] border border-[#464750] hover:bg-[#1F1F1F] hover:text-white transition-all"
+                      className="rounded-[2px] px-6 py-3 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] border border-[#464750] hover:bg-[#1F1F1F] hover:text-white transition-all"
                     >
                       View
                     </Link>

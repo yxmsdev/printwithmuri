@@ -41,7 +41,7 @@ export default function BagModal({ onClose }: BagModalProps) {
         <p className="text-[13px] text-[#7A7A7A] mb-6">Upload a 3D model to get started</p>
         <button
           onClick={onClose}
-          className="px-6 py-2.5 text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+          className="px-6 py-2 rounded-[2px] text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
           }}
@@ -69,7 +69,7 @@ export default function BagModal({ onClose }: BagModalProps) {
               className="flex gap-4 pb-4 border-b border-[#E6E6E6]"
             >
               {/* Model Preview Placeholder */}
-              <div className="w-[80px] h-[80px] bg-[#EDEDED] rounded flex items-center justify-center flex-shrink-0">
+              <div className="w-[80px] h-[80px] bg-[#EDEDED] rounded-[2px] flex items-center justify-center flex-shrink-0">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
                   <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
                   <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -106,7 +106,7 @@ export default function BagModal({ onClose }: BagModalProps) {
                 {/* Quantity & Price */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 border border-[#E6E6E6] rounded px-2 py-0.5">
+                    <div className="flex items-center gap-2 border border-[#E6E6E6] rounded-[2px] px-2 py-0.5">
                       <button
                         onClick={() => handleQuantityChange(item.id, item.config.quantity - 1)}
                         className="text-[#7A7A7A] hover:text-[#1F1F1F] transition-colors"
@@ -173,7 +173,7 @@ export default function BagModal({ onClose }: BagModalProps) {
             onClose();
             router.push('/checkout');
           }}
-          className="w-full py-3 text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3"
+          className="w-full py-2 rounded-[2px] text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
           }}

@@ -6,7 +6,7 @@ export default function SupportPage() {
         <p className="text-medium">
           Need help? We&apos;re here for you!
         </p>
-        <div className="bg-light p-6 rounded-lg">
+        <div className="bg-light p-6 rounded-[2px]">
           <h2 className="font-semibold mb-2">Contact Us</h2>
           <p className="text-medium">Email: support@printwithmuri.com</p>
         </div>

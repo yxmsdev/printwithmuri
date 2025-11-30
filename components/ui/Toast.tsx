@@ -40,7 +40,7 @@ const Toast: React.FC<ToastProps> = ({
       <div
         className={`
           ${typeStyles[type]}
-          px-6 py-4 rounded-lg shadow-lg
+          px-6 py-4 rounded-[2px] shadow-lg
           flex items-center gap-3
           min-w-[300px]
         `}

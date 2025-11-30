@@ -85,7 +85,7 @@ export default function DraftsPage() {
             </div>
             <Link
               href="/"
-              className="px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}
@@ -109,7 +109,7 @@ export default function DraftsPage() {
             </p>
             <Link
               href="/"
-              className="px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="px-8 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}
@@ -135,7 +135,7 @@ export default function DraftsPage() {
           </div>
           <Link
             href="/"
-            className="px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+            className="px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
             style={{
               background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
             }}
@@ -165,7 +165,7 @@ export default function DraftsPage() {
               >
                 {/* Project */}
                 <div className="w-[240px] flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#FAFAFA] rounded flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-[#FAFAFA] rounded-[2px] flex items-center justify-center flex-shrink-0">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" strokeWidth="1.5">
                       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -201,7 +201,7 @@ export default function DraftsPage() {
                 <div className="w-[120px] flex items-center justify-center gap-3 relative">
                   <Link
                     href={`/?draft=${draft.id}`}
-                    className="px-6 py-3 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] border border-[#464750] hover:bg-[#1F1F1F] hover:text-white transition-all"
+                    className="px-6 py-2 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] border border-[#464750] hover:bg-[#1F1F1F] hover:text-white transition-all"
                   >
                     Resume
                   </Link>
@@ -222,7 +222,7 @@ export default function DraftsPage() {
 
                     {/* Dropdown Menu */}
                     {openDropdown === draft.id && (
-                      <div className="absolute right-0 top-full mt-2 bg-white rounded-[4px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[148px]">
+                      <div className="absolute right-0 top-full mt-2 bg-white rounded-[2px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[148px]">
                         <button
                           onClick={() => handleAddToBag(draft)}
                           className="w-full px-8 py-2 rounded-[2px] text-[13px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors"

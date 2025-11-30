@@ -31,17 +31,23 @@ const SETUP_FEE = 500; // ₦500
  */
 export async function POST(request: NextRequest) {
   const requestId = Math.random().toString(36).substring(7);
+  const requestStartTime = Date.now();
+
   console.log(`\n${'='.repeat(80)}`);
   console.log(`🆕 NEW SLICE REQUEST [${requestId}]`);
   console.log(`${'='.repeat(80)}\n`);
+  console.log(`[${requestId}] ⏱️  Request received at ${new Date().toISOString()}`);
 
   try {
     // Cleanup old files before processing (async, don't wait)
     cleanupOldFiles(24).catch(err => console.error(`[${requestId}] Cleanup error:`, err));
 
     // Get the file and configuration from the request
-    console.log(`[${requestId}] 📥 Parsing form data...`);
+    console.log(`[${requestId}] 📥 Parsing form data (includes file upload)...`);
+    const uploadStartTime = Date.now();
     const formData = await request.formData();
+    const uploadDuration = Date.now() - uploadStartTime;
+    console.log(`[${requestId}] ⏱️  Upload completed in ${(uploadDuration / 1000).toFixed(1)}s`);
     const file = formData.get('file') as File;
     const quality = formData.get('quality') as string;
     const material = formData.get('material') as string;
@@ -189,8 +195,10 @@ export async function POST(request: NextRequest) {
       }
     };
 
+    const totalDuration = Date.now() - requestStartTime;
     console.log(`[${requestId}] 🎉 Slice request completed successfully`);
-    console.log(`[${requestId}] Quote ID: ${quoteId}\n`);
+    console.log(`[${requestId}] Quote ID: ${quoteId}`);
+    console.log(`[${requestId}] ⏱️  Total request time: ${(totalDuration / 1000).toFixed(1)}s (Upload: ${(uploadDuration / 1000).toFixed(1)}s, Slicing: ${(sliceDuration / 1000).toFixed(1)}s)\n`);
 
     return NextResponse.json(response);
 
