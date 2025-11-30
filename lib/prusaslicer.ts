@@ -101,6 +101,7 @@ async function buildPrusaSlicerArgs(
 
 
 
+  // The .ini files now contain the layer height, so we don't need to override it.
   // Build arguments array (execFile handles escaping automatically)
   const args: string[] = [
     '--export-gcode',
@@ -108,9 +109,8 @@ async function buildPrusaSlicerArgs(
     '--load', printerProfile,
     '--load', filamentProfile,
     '--load', printProfile,
-    '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
-    '--fill-pattern', infillType, // Add infillType here
+    '--fill-pattern', infillType,
     // Enable supports for better print quality (use = syntax to avoid ambiguity)
     '--support-material=1',
     '--support-material-auto=1',
