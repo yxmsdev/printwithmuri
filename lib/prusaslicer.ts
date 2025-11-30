@@ -19,7 +19,7 @@ export interface SlicerConfig {
   quality: 'draft' | 'standard' | 'high' | 'ultra';
   material: 'PLA' | 'PETG' | 'ABS' | 'Resin';
   infillDensity: number; // 5-100 percentage
-  infillType: 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic';
+  infillType: 'cubic' | 'gyroid' | 'honeycomb' | 'rectilinear' | 'grid' | 'line' | 'triangles' | 'concentric';
 }
 
 export interface SliceResult {

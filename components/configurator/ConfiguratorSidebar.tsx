@@ -61,7 +61,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   
   const [selectedColor, setSelectedColor] = useState(initialColor);
   const [infillExpanded, setInfillExpanded] = useState(false);
-  const [infillType, setInfillType] = useState(initialConfig?.infillType ?? 'Hexagonal');
+  const [infillType, setInfillType] = useState(initialConfig?.infillType ?? 'Honeycomb');
   const [infillDensity, setInfillDensity] = useState(initialConfig?.infillDensity ?? 25);
   const [isSliderDragging, setIsSliderDragging] = useState(false);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
@@ -790,11 +790,14 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                     onChange={(e) => { setInfillType(e.target.value); setHasChanges(true); }}
                     className="w-full bg-[#EFEFEF] px-2 py-1 text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] appearance-none cursor-pointer leading-[1.8] pr-7"
                   >
-                    <option>Hexagonal</option>
-                    <option>Grid</option>
-                    <option>Lines</option>
-                    <option>Triangles</option>
                     <option>Cubic</option>
+                    <option>Gyroid</option>
+                    <option>Honeycomb</option>
+                    <option>Rectilinear</option>
+                    <option>Grid</option>
+                    <option>Line</option>
+                    <option>Triangles</option>
+                    <option>Concentric</option>
                   </select>
                   <Image
                     src="/images/icons/dropdown.svg"
