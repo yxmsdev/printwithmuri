@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const quality = formData.get('quality') as string;
     const material = formData.get('material') as string;
     const infillDensity = formData.get('infillDensity') as string;
-    const infillType = formData.get('infillType') as string;
+    const infillType = (formData.get('infillType') as string) || 'hexagonal';
 
     // Validate required fields
     if (!file) {
