@@ -64,6 +64,7 @@ export function calculatePrice(
     itemTotal,
     quantity: config.quantity,
     subtotal,
+    source: 'local-estimation',
   };
 }
 
