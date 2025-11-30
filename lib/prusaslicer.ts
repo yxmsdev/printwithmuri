@@ -19,7 +19,7 @@ export interface SlicerConfig {
   quality: 'draft' | 'standard' | 'high' | 'ultra';
   material: 'PLA' | 'PETG' | 'ABS' | 'Resin';
   infillDensity: number; // 5-100 percentage
-  infillType?: string;
+  infillType: 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic';
 }
 
 export interface SliceResult {
@@ -60,7 +60,7 @@ async function buildPrusaSlicerArgs(
   outputPath: string,
   config: SlicerConfig
 ): Promise<string[]> {
-  const { quality, material, infillDensity } = config;
+  const { quality, material, infillDensity, infillType } = config; // Destructure infillType
 
   // Configuration file paths (use different path for dev vs production)
   // In production (Docker), config is at /app/config/prusaslicer
@@ -73,7 +73,21 @@ async function buildPrusaSlicerArgs(
 
   const printerProfile = `${configDir}/printer/Generic_FDM.ini`;
   const filamentProfile = `${configDir}/filament/${material}.ini`;
-  const printProfile = `${configDir}/print/Standard_Quality.ini`;
+
+  // Dynamically select print profile based on quality
+  // The frontend sends quality as 'draft', 'standard', 'high', 'ultra' (lowercase)
+  // PrusaSlicer config files are like 'Draft_Quality.ini', 'Standard_Quality.ini'
+  const qualityToFileName: Record<SlicerConfig['quality'], string> = {
+    draft: 'Draft_Quality.ini',
+    standard: 'Standard_Quality.ini',
+    high: 'High_Quality.ini',
+    ultra: 'Ultra_Quality.ini',
+  };
+  const printProfileFileName = qualityToFileName[quality];
+  if (!printProfileFileName) {
+    throw new Error(`Unsupported print quality: ${quality}`);
+  }
+  const printProfile = `${configDir}/print/${printProfileFileName}`;
 
   console.log(`📁 Looking for config files:`);
   console.log(`   Printer: ${printerProfile}`);
@@ -104,6 +118,7 @@ async function buildPrusaSlicerArgs(
     '--load', printProfile,
     '--layer-height', layerHeight.toString(),
     '--fill-density', `${infillDensity}%`,
+    '--fill-pattern', infillType, // Add infillType here
     // Enable supports for better print quality (use = syntax to avoid ambiguity)
     '--support-material=1',
     '--support-material-auto=1',

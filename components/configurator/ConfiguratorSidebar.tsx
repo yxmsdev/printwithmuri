@@ -254,6 +254,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         formData.append('quality', quality.toLowerCase());
         formData.append('material', material);
         formData.append('infillDensity', infillDensity.toString());
+        formData.append('infillType', infillType.toLowerCase());
 
         // Use XMLHttpRequest for re-slicing (file re-upload needed for server API)
         const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
@@ -434,6 +435,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
     formData.append('quality', quality.toLowerCase());
     formData.append('material', material);
     formData.append('infillDensity', infillDensity.toString());
+    formData.append('infillType', infillType.toLowerCase());
 
     try {
       const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {

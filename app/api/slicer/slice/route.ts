@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
     const quality = formData.get('quality') as string;
     const material = formData.get('material') as string;
     const infillDensity = formData.get('infillDensity') as string;
+    const infillType = formData.get('infillType') as string;
 
     // Validate required fields
     if (!file) {
@@ -85,6 +86,15 @@ export async function POST(request: NextRequest) {
         { error: 'infillDensity must be between 5 and 100' },
         { status: 400 }
       );
+    }
+
+    const allowedInfillTypes = ['hexagonal', 'grid', 'lines', 'triangles', 'cubic'];
+    if (!infillType || !allowedInfillTypes.includes(infillType)) {
+        console.error(`[${requestId}] ❌ Validation failed: Invalid infillType:`, infillType);
+        return NextResponse.json(
+            { error: `Valid infillType is required (${allowedInfillTypes.join(', ')})` },
+            { status: 400 }
+        );
     }
 
     // Validate file type
@@ -127,6 +137,7 @@ export async function POST(request: NextRequest) {
       quality: quality as 'draft' | 'standard' | 'high' | 'ultra',
       material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
       infillDensity: infillDensityNum,
+      infillType: infillType as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
     };
 
     // Slice the model
