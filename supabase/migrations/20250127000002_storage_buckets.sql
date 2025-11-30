@@ -17,7 +17,8 @@ VALUES (
     'text/plain',
     'application/3mf'
   ]
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Create design-guides bucket (for reference images)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -32,11 +33,21 @@ VALUES (
     'image/webp',
     'image/jpg'
   ]
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
 -- STORAGE POLICIES
 -- =============================================
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can upload own models" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own models" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own models" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own models" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload own design guides" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own design guides" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own design guides" ON storage.objects;
 
 -- Models bucket policies
 CREATE POLICY "Users can upload own models"

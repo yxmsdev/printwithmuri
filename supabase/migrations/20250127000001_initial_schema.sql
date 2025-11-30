@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =============================================
 -- PROFILES TABLE
 -- =============================================
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   full_name TEXT,
   phone TEXT,
@@ -30,7 +30,7 @@ CREATE TRIGGER on_auth_user_created
 -- =============================================
 -- MODELS TABLE
 -- =============================================
-CREATE TABLE models (
+CREATE TABLE IF NOT EXISTS models (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   file_url TEXT NOT NULL,
@@ -44,13 +44,13 @@ CREATE TABLE models (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_models_user_id ON models(user_id);
-CREATE INDEX idx_models_created_at ON models(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_models_user_id ON models(user_id);
+CREATE INDEX IF NOT EXISTS idx_models_created_at ON models(created_at DESC);
 
 -- =============================================
 -- DRAFTS TABLE
 -- =============================================
-CREATE TABLE drafts (
+CREATE TABLE IF NOT EXISTS drafts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   model_id UUID REFERENCES models(id) ON DELETE CASCADE,
@@ -60,8 +60,8 @@ CREATE TABLE drafts (
   expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days')
 );
 
-CREATE INDEX idx_drafts_user_id ON drafts(user_id);
-CREATE INDEX idx_drafts_expires_at ON drafts(expires_at);
+CREATE INDEX IF NOT EXISTS idx_drafts_user_id ON drafts(user_id);
+CREATE INDEX IF NOT EXISTS idx_drafts_expires_at ON drafts(expires_at);
 
 -- Auto-delete expired drafts
 CREATE OR REPLACE FUNCTION delete_expired_drafts()
@@ -74,7 +74,7 @@ $$ LANGUAGE plpgsql;
 -- =============================================
 -- ORDERS TABLE
 -- =============================================
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
   order_number TEXT UNIQUE NOT NULL,
@@ -95,11 +95,11 @@ CREATE TABLE orders (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_order_number ON orders(order_number);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
-CREATE INDEX idx_orders_payment_status ON orders(payment_status);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders(order_number);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON orders(payment_status);
 
 -- Generate unique order number
 CREATE OR REPLACE FUNCTION generate_order_number()
@@ -120,7 +120,7 @@ $$ LANGUAGE plpgsql;
 -- =============================================
 -- ORDER STATUS HISTORY TABLE
 -- =============================================
-CREATE TABLE order_status_history (
+CREATE TABLE IF NOT EXISTS order_status_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
   status TEXT NOT NULL,
@@ -128,8 +128,8 @@ CREATE TABLE order_status_history (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_order_status_history_order_id ON order_status_history(order_id);
-CREATE INDEX idx_order_status_history_created_at ON order_status_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_status_history_order_id ON order_status_history(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_status_history_created_at ON order_status_history(created_at DESC);
 
 -- Trigger to log status changes
 CREATE OR REPLACE FUNCTION log_order_status_change()
@@ -153,7 +153,7 @@ CREATE TRIGGER on_order_status_change
 -- =============================================
 -- DESIGN GUIDE IMAGES TABLE
 -- =============================================
-CREATE TABLE design_guide_images (
+CREATE TABLE IF NOT EXISTS design_guide_images (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   model_id UUID REFERENCES models(id) ON DELETE CASCADE,
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
@@ -161,21 +161,21 @@ CREATE TABLE design_guide_images (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_design_guide_images_model_id ON design_guide_images(model_id);
-CREATE INDEX idx_design_guide_images_order_id ON design_guide_images(order_id);
+CREATE INDEX IF NOT EXISTS idx_design_guide_images_model_id ON design_guide_images(model_id);
+CREATE INDEX IF NOT EXISTS idx_design_guide_images_order_id ON design_guide_images(order_id);
 
 -- =============================================
 -- COMING SOON EMAIL SIGNUPS TABLE
 -- =============================================
-CREATE TABLE coming_soon_signups (
+CREATE TABLE IF NOT EXISTS coming_soon_signups (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT NOT NULL,
   service_type TEXT NOT NULL CHECK (service_type IN ('paper', 'merch')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_coming_soon_signups_email ON coming_soon_signups(email);
-CREATE INDEX idx_coming_soon_signups_service_type ON coming_soon_signups(service_type);
+CREATE INDEX IF NOT EXISTS idx_coming_soon_signups_email ON coming_soon_signups(email);
+CREATE INDEX IF NOT EXISTS idx_coming_soon_signups_service_type ON coming_soon_signups(service_type);
 CREATE UNIQUE INDEX idx_coming_soon_signups_email_service ON coming_soon_signups(email, service_type);
 
 -- =============================================
@@ -192,56 +192,56 @@ ALTER TABLE design_guide_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coming_soon_signups ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
-CREATE POLICY "Users can view own profile"
-  ON profiles FOR SELECT
+DROP POLICY IF EXISTS "Users can view own profile"
+CREATE POLICY "  ON profiles FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE
+DROP POLICY IF EXISTS "Users can update own profile"
+CREATE POLICY "  ON profiles FOR UPDATE
   USING (auth.uid() = id);
 
 -- Models policies
-CREATE POLICY "Users can view own models"
-  ON models FOR SELECT
+DROP POLICY IF EXISTS "Users can view own models"
+CREATE POLICY "  ON models FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own models"
-  ON models FOR INSERT
+DROP POLICY IF EXISTS "Users can insert own models"
+CREATE POLICY "  ON models FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own models"
-  ON models FOR DELETE
+DROP POLICY IF EXISTS "Users can delete own models"
+CREATE POLICY "  ON models FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Drafts policies
-CREATE POLICY "Users can view own drafts"
-  ON drafts FOR SELECT
+DROP POLICY IF EXISTS "Users can view own drafts"
+CREATE POLICY "  ON drafts FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own drafts"
-  ON drafts FOR INSERT
+DROP POLICY IF EXISTS "Users can insert own drafts"
+CREATE POLICY "  ON drafts FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own drafts"
-  ON drafts FOR UPDATE
+DROP POLICY IF EXISTS "Users can update own drafts"
+CREATE POLICY "  ON drafts FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own drafts"
-  ON drafts FOR DELETE
+DROP POLICY IF EXISTS "Users can delete own drafts"
+CREATE POLICY "  ON drafts FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Orders policies
-CREATE POLICY "Users can view own orders"
-  ON orders FOR SELECT
+DROP POLICY IF EXISTS "Users can view own orders"
+CREATE POLICY "  ON orders FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own orders"
-  ON orders FOR INSERT
+DROP POLICY IF EXISTS "Users can insert own orders"
+CREATE POLICY "  ON orders FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Order status history policies
-CREATE POLICY "Users can view own order history"
-  ON order_status_history FOR SELECT
+DROP POLICY IF EXISTS "Users can view own order history"
+CREATE POLICY "  ON order_status_history FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM orders
@@ -251,8 +251,8 @@ CREATE POLICY "Users can view own order history"
   );
 
 -- Design guide images policies
-CREATE POLICY "Users can view own design guide images"
-  ON design_guide_images FOR SELECT
+DROP POLICY IF EXISTS "Users can view own design guide images"
+CREATE POLICY "  ON design_guide_images FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM models
@@ -267,8 +267,8 @@ CREATE POLICY "Users can view own design guide images"
     )
   );
 
-CREATE POLICY "Users can insert own design guide images"
-  ON design_guide_images FOR INSERT
+DROP POLICY IF EXISTS "Users can insert own design guide images"
+CREATE POLICY "  ON design_guide_images FOR INSERT
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM models
@@ -278,8 +278,8 @@ CREATE POLICY "Users can insert own design guide images"
   );
 
 -- Coming soon signups policies (public insert)
-CREATE POLICY "Anyone can insert email signups"
-  ON coming_soon_signups FOR INSERT
+DROP POLICY IF EXISTS "Anyone can insert email signups"
+CREATE POLICY "  ON coming_soon_signups FOR INSERT
   WITH CHECK (true);
 
 -- =============================================
