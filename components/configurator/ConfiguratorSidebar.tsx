@@ -118,10 +118,11 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
 
   // Manual slice function - called when user clicks "Slice Model" or "Re-slice Model"
   const handleSliceModel = async (providedFileId?: string) => {
+    console.log('🔍 handleSliceModel called with:', { providedFileId, stateFileId: fileId });
     const fileIdToUse = providedFileId || fileId;
 
     if (!fileIdToUse) {
-      console.error('Cannot slice: no fileId available');
+      console.error('Cannot slice: no fileId available', { providedFileId, stateFileId: fileId });
       setPriceError('File not uploaded');
       return;
     }
@@ -355,6 +356,8 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       });
 
       // Store fileId for future slicing requests
+      console.log('📦 Upload response data:', uploadData);
+      console.log('📝 Extracting fileId:', uploadData.fileId);
       setFileId(uploadData.fileId);
       setIsUploading(false);
 
