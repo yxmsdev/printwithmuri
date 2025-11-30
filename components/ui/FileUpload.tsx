@@ -296,7 +296,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                             className="absolute left-0 top-0 h-full rounded-[2px] transition-all duration-300"
                             style={{
                               width: `${uploadProgress}%`,
-                              background: 'linear-gradient(155deg, #34E5FF -2.79%, #0098C7 93.92%)'
+                              background: 'linear-gradient(to bottom, #34E5FF -2.79%, #0098C7 93.92%)'
                             }}
                           />
                         </div>

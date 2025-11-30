@@ -62,8 +62,12 @@ async function buildPrusaSlicerArgs(
 ): Promise<string[]> {
   const { quality, material, infillDensity } = config;
 
-  // Configuration file paths (will be in Docker container)
-  const configDir = '/app/config/prusaslicer';
+  // Configuration file paths (use different path for dev vs production)
+  // In production (Docker), config is at /app/config/prusaslicer
+  // In development, config is in the project root
+  const configDir = process.env.NODE_ENV === 'production'
+    ? '/app/config/prusaslicer'
+    : path.join(process.cwd(), 'config/prusaslicer');
   const printerProfile = `${configDir}/printer/Generic_FDM.ini`;
   const filamentProfile = `${configDir}/filament/${material}.ini`;
   const printProfile = `${configDir}/print/Standard_Quality.ini`;

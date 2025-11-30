@@ -161,7 +161,7 @@ export default function Home() {
           </div>
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <div className="pointer-events-auto">
-              <FileUpload onFileSelect={handleFileSelect} />
+              <FileUpload key={Date.now()} onFileSelect={handleFileSelect} />
             </div>
           </div>
         </>
@@ -184,10 +184,8 @@ export default function Home() {
                 }
                 const url = URL.createObjectURL(file);
                 setSelectedFile({ url, name: file.name, file });
-                setModelInfo(null); // Reset model info until new model loads
-                setInitialSliceResults(null); // Clear slice results since file changed
+                // Don't reset modelInfo or sliceResults - ConfiguratorSidebar already has new data
                 setLoadedDraftId(null); // Clear draft since file changed
-                setInitialConfig(undefined);
               }}
               onAddToBag={handleAddToBag}
               onSaveAsDraft={handleSaveAsDraft}
