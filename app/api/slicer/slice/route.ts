@@ -79,6 +79,15 @@ async function handleSlicing(request: NextRequest) {
     const infillDensity = formData.get('infillDensity') as string;
     const infillType = (formData.get('infillType') as string) || 'honeycomb';
 
+    console.log(`[${requestId}] 📋 Form data received:`, {
+      fileId,
+      quality,
+      material,
+      infillDensity,
+      infillType,
+      allKeys: Array.from(formData.keys())
+    });
+
     // Validate required fields
     if (!fileId) {
       console.error(`[${requestId}] ❌ Validation failed: No fileId provided`);
@@ -248,7 +257,7 @@ async function handleSlicing(request: NextRequest) {
     const totalDuration = Date.now() - requestStartTime;
     console.log(`[${requestId}] 🎉 Slice request completed successfully`);
     console.log(`[${requestId}] Quote ID: ${quoteId}`);
-    console.log(`[${requestId}] ⏱️  Total request time: ${(totalDuration / 1000).toFixed(1)}s (Upload: ${(uploadDuration / 1000).toFixed(1)}s, Slicing: ${(sliceDuration / 1000).toFixed(1)}s)\n`);
+    console.log(`[${requestId}] ⏱️  Total request time: ${(totalDuration / 1000).toFixed(1)}s (Slicing: ${(sliceDuration / 1000).toFixed(1)}s)\n`);
 
     return NextResponse.json(response);
 

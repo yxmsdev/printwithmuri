@@ -138,6 +138,14 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       formData.append('infillDensity', infillDensity.toString());
       formData.append('infillType', infillType.toLowerCase());
 
+      console.log('📤 Sending slice request with data:', {
+        fileId: fileIdToUse,
+        quality: quality.toLowerCase(),
+        material,
+        infillDensity: infillDensity.toString(),
+        infillType: infillType.toLowerCase()
+      });
+
       const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         sliceXhrRef.current = xhr;
