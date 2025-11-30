@@ -117,20 +117,22 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   };
 
   // Manual slice function - called when user clicks "Slice Model" or "Re-slice Model"
-  const handleSliceModel = async () => {
-    if (!fileId) {
+  const handleSliceModel = async (providedFileId?: string) => {
+    const fileIdToUse = providedFileId || fileId;
+
+    if (!fileIdToUse) {
       console.error('Cannot slice: no fileId available');
       setPriceError('File not uploaded');
       return;
     }
 
-    console.log('🎯 Manual slice triggered with fileId:', fileId);
+    console.log('🎯 Manual slice triggered with fileId:', fileIdToUse);
     setIsSlicing(true);
     setPriceError(null);
 
     try {
       const formData = new FormData();
-      formData.append('fileId', fileId);
+      formData.append('fileId', fileIdToUse);
       formData.append('quality', quality.toLowerCase());
       formData.append('material', material);
       formData.append('infillDensity', infillDensity.toString());
@@ -354,8 +356,8 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       console.log('✅ Phase 1 complete. File ID:', uploadData.fileId);
       console.log('🎯 Starting Phase 2: Auto-slice with default settings');
 
-      // Phase 2: Auto-slice with current settings (as per plan)
-      await handleSliceModel();
+      // Phase 2: Auto-slice with current settings (pass fileId directly to avoid race condition)
+      await handleSliceModel(uploadData.fileId);
 
     } catch (err) {
       console.error('❌ Upload error:', err);
@@ -896,7 +898,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         {/* Action Buttons */}
         <div className="flex flex-col items-center gap-2">
           <button
-            onClick={hasUnsavedSettings ? handleSliceModel : handleAddToBag}
+            onClick={hasUnsavedSettings ? () => handleSliceModel() : handleAddToBag}
             disabled={isSlicing || isUploading}
             className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
