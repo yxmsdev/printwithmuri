@@ -169,78 +169,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         return;
       }
 
-      // Check if we're in production (server-side slicing available)
-      const isProduction = process.env.NODE_ENV === 'production';
-
-      if (!isProduction) {
-        // In development, skip server slicing and use local estimation
-        console.log('🔧 Development mode: using local estimation only');
-        setIsLoadingPrice(false);
-        const printConfig: PrintConfig = {
-          modelId: 'temp',
-          quantity: quantity,
-          quality: quality.toLowerCase() as 'draft' | 'standard' | 'high' | 'ultra',
-          material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
-          color: selectedColor.value,
-          infillType: infillType.toLowerCase() as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
-          infillDensity: infillDensity,
-          designGuideImages: [],
-        };
-        const localPrice = calculatePrice(printConfig, modelInfo);
-        console.log('📊 Local price calculated:', localPrice);
-        setPriceBreakdown({ ...localPrice, source: 'local-estimation' });
-        return;
-      }
-
-      // Development mode: Skip server slicing, use mock data
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔧 Development mode: Using mock re-slice data');
-        setIsLoadingPrice(true);
-        setSlicingInProgress(true);
-
-        // Simulate slicing delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const mockData: SlicerQuoteResponse = {
-          success: true,
-          quote: {
-            quote_id: `mock-reslice-${Date.now()}`,
-            gcode_file: `mock-resliced.gcode`,
-            estimatedWeight: 28.3,
-            printTime: 3.2,
-            machineCost: 6400,
-            materialCost: 4245,
-            setupFee: 500,
-            itemTotal: 11145,
-            currency: 'NGN',
-            slicingDuration: 1000,
-            layerCount: 250,
-          }
-        };
-
-        const slicedPricing = {
-          estimatedWeight: mockData.quote.estimatedWeight,
-          printTime: mockData.quote.printTime,
-          machineCost: mockData.quote.machineCost,
-          materialCost: mockData.quote.materialCost,
-          setupFee: mockData.quote.setupFee,
-          itemTotal: mockData.quote.itemTotal,
-          quantity: quantity,
-          subtotal: mockData.quote.itemTotal * quantity,
-          quoteId: mockData.quote.quote_id,
-          gcodeFile: mockData.quote.gcode_file,
-          layerCount: mockData.quote.layerCount,
-          source: 'server-sliced' as const,
-        };
-
-        console.log('✅ Mock re-slice complete:', slicedPricing);
-        setPriceBreakdown(slicedPricing);
-        setSlicingInProgress(false);
-        setIsLoadingPrice(false);
-        return;
-      }
-
-      console.log('🎯 Production mode: attempting server-side slicing');
+      console.log('🎯 Attempting server-side slicing...');
 
       setIsLoadingPrice(true);
       setPriceError(null);
