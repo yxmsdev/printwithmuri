@@ -207,16 +207,28 @@ export async function sliceModel(
       gcodeFilePath,
       metrics,
     };
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('❌ PrusaSlicer slicing failed');
 
     const errorObj = error instanceof Error ? error : new Error(String(error));
     console.error('Error type:', errorObj.constructor.name);
     console.error('Error message:', errorObj.message);
+    if(error.stdout) {
+      console.error('PrusaSlicer stdout:', error.stdout);
+    }
+    if(error.stderr) {
+      console.error('PrusaSlicer stderr:', error.stderr);
+    }
     console.error('Error stack:', errorObj.stack);
 
     // Check for specific error types
     let errorMessage = 'Unknown error during slicing';
+    if (error.stderr) {
+      errorMessage = error.stderr;
+    } else {
+      errorMessage = errorObj.message;
+    }
+
 
     if (errorObj.message.includes('ETIMEDOUT') || errorObj.message.includes('timeout') || errorObj.message.includes('KILLED')) {
       errorMessage = `Slicing timeout after ${SLICER_TIMEOUT / 1000}s. Try a simpler model or increase SLICER_TIMEOUT.`;
@@ -227,8 +239,6 @@ export async function sliceModel(
     } else if (errorObj.message.includes('not found or not readable')) {
       errorMessage = errorObj.message;
     } else if (errorObj.message.includes('not created')) {
-      errorMessage = errorObj.message;
-    } else {
       errorMessage = errorObj.message;
     }
 
