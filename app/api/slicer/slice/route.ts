@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { sliceModel, SlicerConfig, cleanupOldFiles } from '@/lib/prusaslicer';
+import { createClient } from '@/lib/supabase/server';
+
+// Configure the API route to allow longer execution time
+export const maxDuration = 300; // 5 minutes
+export const dynamic = 'force-dynamic';
 
 const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 
@@ -65,26 +70,67 @@ async function handleSlicing(request: NextRequest) {
     // Cleanup old files before processing (async, don't wait)
     cleanupOldFiles(24).catch(err => console.error(`[${requestId}] Cleanup error:`, err));
 
-    // Get the file and configuration from the request
-    console.log(`[${requestId}] 📥 Parsing form data (includes file upload)...`);
-    const uploadStartTime = Date.now();
+    // Get configuration from the request
+    console.log(`[${requestId}] 📥 Parsing request data...`);
     const formData = await request.formData();
-    const uploadDuration = Date.now() - uploadStartTime;
-    console.log(`[${requestId}] ⏱️  Upload completed in ${(uploadDuration / 1000).toFixed(1)}s`);
-    const file = formData.get('file') as File;
+    const fileId = formData.get('fileId') as string;
     const quality = formData.get('quality') as string;
     const material = formData.get('material') as string;
     const infillDensity = formData.get('infillDensity') as string;
     const infillType = (formData.get('infillType') as string) || 'honeycomb';
 
     // Validate required fields
-    if (!file) {
-      console.error(`[${requestId}] ❌ Validation failed: No file provided`);
+    if (!fileId) {
+      console.error(`[${requestId}] ❌ Validation failed: No fileId provided`);
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'No fileId provided' },
         { status: 400 }
       );
     }
+
+    console.log(`[${requestId}] 🔍 Looking up file with ID: ${fileId}`);
+
+    // Retrieve file information from database
+    const supabase = await createClient();
+    const { data: upload, error: dbError } = await supabase
+      .from('temp_uploads')
+      .select('*')
+      .eq('file_id', fileId)
+      .single();
+
+    if (dbError || !upload) {
+      console.error(`[${requestId}] ❌ File not found in database:`, dbError);
+      return NextResponse.json(
+        { error: 'File not found. It may have expired or been deleted.' },
+        { status: 404 }
+      );
+    }
+
+    // Check if file has expired
+    const expiresAt = new Date(upload.expires_at);
+    if (expiresAt < new Date()) {
+      console.error(`[${requestId}] ❌ File has expired: ${upload.expires_at}`);
+      return NextResponse.json(
+        { error: 'File has expired. Please upload again.' },
+        { status: 410 }
+      );
+    }
+
+    // Check if file exists on disk
+    const tempFilePath = upload.file_path;
+    try {
+      await fs.access(tempFilePath, fs.constants.R_OK);
+      console.log(`[${requestId}] ✅ File found: ${tempFilePath}`);
+    } catch {
+      console.error(`[${requestId}] ❌ File not found on disk: ${tempFilePath}`);
+      return NextResponse.json(
+        { error: 'File not found on server. It may have been cleaned up.' },
+        { status: 404 }
+      );
+    }
+
+    const fileName = upload.file_name;
+    const fileExtension = upload.file_extension;
 
     if (!quality || !['draft', 'standard', 'high', 'ultra'].includes(quality)) {
       console.error(`[${requestId}] ❌ Validation failed: Invalid quality:`, quality);
@@ -120,40 +166,13 @@ async function handleSlicing(request: NextRequest) {
         );
     }
 
-    // Validate file type
-    const allowedExtensions = ['.stl', '.obj', '.3mf', '.fbx', '.gltf', '.glb'];
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-
-    if (!allowedExtensions.includes(fileExtension)) {
-      console.error(`[${requestId}] ❌ Validation failed: Invalid file type:`, fileExtension);
-      return NextResponse.json(
-        { error: `Unsupported file type. Allowed: ${allowedExtensions.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
     console.log(`[${requestId}] ✅ Validation passed`);
     console.log(`[${requestId}] 🔵 Starting slice operation...`);
-    console.log(`[${requestId}]   File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+    console.log(`[${requestId}]   File: ${fileName} (${(upload.file_size / 1024).toFixed(2)} KB)`);
+    console.log(`[${requestId}]   File ID: ${fileId}`);
     console.log(`[${requestId}]   Quality: ${quality}`);
     console.log(`[${requestId}]   Material: ${material}`);
-    console.log(`[${requestId}]   Infill: ${infillDensity}%`);
-
-    // Ensure temp directory exists
-    console.log(`[${requestId}] 📁 Ensuring temp directory exists: ${TEMP_DIR}`);
-    await fs.mkdir(TEMP_DIR, { recursive: true });
-
-    // Save uploaded file to temp directory
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(7);
-    const tempFileName = `model-${timestamp}-${randomId}${fileExtension}`;
-    const tempFilePath = path.join(TEMP_DIR, tempFileName);
-
-    console.log(`[${requestId}] 💾 Saving uploaded file to: ${tempFilePath}`);
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile(tempFilePath, buffer);
-    console.log(`[${requestId}] ✅ File saved successfully`);
+    console.log(`[${requestId}]   Infill: ${infillDensity}% (${infillType})`);
 
     // Configure slicing settings
     const slicerConfig: SlicerConfig = {
@@ -172,13 +191,8 @@ async function handleSlicing(request: NextRequest) {
     const sliceDuration = Date.now() - sliceStart;
     console.log(`[${requestId}] ⏱️  Slicing operation took ${(sliceDuration / 1000).toFixed(1)}s`);
 
-    // Clean up input file
-    try {
-      await fs.unlink(tempFilePath);
-      console.log(`[${requestId}] 🗑️  Cleaned up input file`);
-    } catch (error) {
-      console.warn(`[${requestId}] ⚠️  Failed to cleanup input file:`, error);
-    }
+    // Note: We don't delete the input file since it may be reused for different settings
+    console.log(`[${requestId}] 📁 Input file retained for potential re-slicing`);
 
     if (!sliceResult.success) {
       console.error(`[${requestId}] ❌ Slicing failed:`, sliceResult.error);
@@ -202,6 +216,8 @@ async function handleSlicing(request: NextRequest) {
     const itemTotal = materialCost + machineCost + SETUP_FEE;
 
     // Generate quote ID
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(7);
     const quoteId = `quote-${timestamp}-${randomId}`;
 
     console.log(`[${requestId}] 💰 Pricing calculated:`);

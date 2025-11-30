@@ -143,3 +143,32 @@ export interface SlicerError {
   details?: string;
   status?: number;
 }
+
+// Two-Phase Slicing Types
+export interface FileUploadResponse {
+  success: boolean;
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  fileExtension: string;
+  expiresAt: string;
+}
+
+export interface SliceRequest {
+  fileId: string;
+  quality: string;
+  material: string;
+  infillDensity: number;
+  infillType: string;
+}
+
+export interface TempUpload {
+  id: string;
+  fileId: string;
+  filePath: string;
+  fileName: string;
+  fileSize: number;
+  fileExtension: string;
+  expiresAt: string;
+  createdAt: string;
+}

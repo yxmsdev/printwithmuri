@@ -1,7 +1,7 @@
 'use client';
 
-import { ModelInfo, PrintConfig, PriceBreakdown, SlicerQuoteResponse } from '@/types';
-import { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
+import { ModelInfo, PrintConfig, PriceBreakdown, SlicerQuoteResponse, FileUploadResponse } from '@/types';
+import { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import Image from 'next/image';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
 import { calculatePrice } from '@/lib/pricing';
@@ -73,18 +73,20 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   const [hasChanges, setHasChanges] = useState(true); // Track if user has made changes since last add
   const [dimensionUnit, setDimensionUnit] = useState<'mm' | 'cm' | 'in'>('mm');
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(null);
-  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
 
-  // Upload progress tracking (for re-uploading when changing model)
+  // Two-phase architecture state
+  const [fileId, setFileId] = useState<string | null>(null);
+  const [hasUnsavedSettings, setHasUnsavedSettings] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedBytes, setUploadedBytes] = useState(0);
   const [totalBytes, setTotalBytes] = useState(0);
-  const [isUploadingNewModel, setIsUploadingNewModel] = useState(false);
-  const [slicingInProgress, setSlicingInProgress] = useState(false);
-  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSlicing, setIsSlicing] = useState(false);
+  const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
+  const sliceXhrRef = useRef<XMLHttpRequest | null>(null);
   
   const addItem = useBagStore((state) => state.addItem);
   const openBag = useBagStore((state) => state.openBag);
@@ -114,182 +116,117 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
     }
   };
 
-  // Fetch price from server-side slicer when configuration changes
-  useEffect(() => {
-    const fetchServerSlicedQuote = async () => {
-      console.log('💰 Price calculation triggered. ModelInfo:', modelInfo, 'File:', file);
+  // Manual slice function - called when user clicks "Slice Model" or "Re-slice Model"
+  const handleSliceModel = async () => {
+    if (!fileId) {
+      console.error('Cannot slice: no fileId available');
+      setPriceError('File not uploaded');
+      return;
+    }
 
-      // Check if we can use cached initial slice results
-      const isUsingDefaultSettings =
-        quality.toLowerCase() === 'standard' &&
-        material === 'PLA' &&
-        infillDensity === 25;
+    console.log('🎯 Manual slice triggered with fileId:', fileId);
+    setIsSlicing(true);
+    setPriceError(null);
 
-      if (initialSliceResults && isUsingDefaultSettings) {
-        console.log('✅ Using cached initial slice results');
-        setIsLoadingPrice(false);
-        const slicedPricing = {
-          estimatedWeight: initialSliceResults.quote.estimatedWeight,
-          printTime: initialSliceResults.quote.printTime,
-          machineCost: initialSliceResults.quote.machineCost,
-          materialCost: initialSliceResults.quote.materialCost,
-          setupFee: initialSliceResults.quote.setupFee,
-          itemTotal: initialSliceResults.quote.itemTotal,
-          quantity: quantity,
-          subtotal: initialSliceResults.quote.itemTotal * quantity,
-          quoteId: initialSliceResults.quote.quote_id,
-          gcodeFile: initialSliceResults.quote.gcode_file,
-          layerCount: initialSliceResults.quote.layerCount,
-          source: 'server-sliced' as const,
-        };
-        setPriceBreakdown(slicedPricing);
-        return;
-      }
+    try {
+      const formData = new FormData();
+      formData.append('fileId', fileId);
+      formData.append('quality', quality.toLowerCase());
+      formData.append('material', material);
+      formData.append('infillDensity', infillDensity.toString());
+      formData.append('infillType', infillType.toLowerCase());
 
-      // Need both modelInfo (for local fallback) and file (for slicing)
-      if (!file || !modelInfo) {
-        console.log('⚠️ No file or modelInfo, using local estimation');
-        // Use local estimation as fallback
-        if (modelInfo) {
-          setIsLoadingPrice(false);
-          const printConfig: PrintConfig = {
-            modelId: 'temp',
-            quantity: quantity,
-            quality: quality.toLowerCase() as 'draft' | 'standard' | 'high' | 'ultra',
-            material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
-            color: selectedColor.value,
-            infillType: infillType.toLowerCase() as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
-            infillDensity: infillDensity,
-            designGuideImages: [],
-          };
-          const localPrice = calculatePrice(printConfig, modelInfo);
-          console.log('📊 Local price calculated:', localPrice);
-          setPriceBreakdown({ ...localPrice, source: 'local-estimation' });
-        }
-        return;
-      }
+      const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        sliceXhrRef.current = xhr;
 
-      console.log('🎯 Attempting server-side slicing...');
-
-      setIsLoadingPrice(true);
-      setPriceError(null);
-      setSlicingInProgress(true);
-
-      try {
-        console.log('📤 Re-slicing with new settings...');
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('quality', quality.toLowerCase());
-        formData.append('material', material);
-        formData.append('infillDensity', infillDensity.toString());
-        formData.append('infillType', infillType.toLowerCase());
-
-        // Use XMLHttpRequest for re-slicing (file re-upload needed for server API)
-        const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhrRef.current = xhr;
-
-          // Response received
-          xhr.addEventListener('load', () => {
-            setSlicingInProgress(false);
-
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                const responseData = JSON.parse(xhr.responseText);
-                console.log('✅ Re-slice complete:', responseData);
-                resolve(responseData);
-              } catch (error) {
-                reject(new Error('Failed to parse response'));
-              }
-            } else {
-              try {
-                const errorData = JSON.parse(xhr.responseText);
-                console.error('❌ Re-slicing failed:', errorData);
-                reject(new Error(errorData.error || 'Failed to slice model'));
-              } catch {
-                reject(new Error(`Request failed with status ${xhr.status}`));
-              }
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const responseData = JSON.parse(xhr.responseText);
+              console.log('✅ Slice complete:', responseData);
+              resolve(responseData);
+            } catch (error) {
+              reject(new Error('Failed to parse response'));
             }
-          });
-
-          // Handle errors
-          xhr.addEventListener('error', () => {
-            setSlicingInProgress(false);
-            reject(new Error('Network error during re-slice'));
-          });
-
-          xhr.addEventListener('timeout', () => {
-            setSlicingInProgress(false);
-            reject(new Error('Re-slice timeout'));
-          });
-
-          // Set timeout (2 minutes)
-          xhr.timeout = 120000;
-
-          // Send request
-          xhr.open('POST', '/api/slicer/slice');
-          xhr.send(formData);
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              console.error('❌ Slicing failed:', errorData);
+              reject(new Error(errorData.error || 'Failed to slice model'));
+            } catch {
+              reject(new Error(`Request failed with status ${xhr.status}`));
+            }
+          }
         });
 
-        console.log('📥 Slice response received');
+        xhr.addEventListener('error', () => reject(new Error('Network error during slice')));
+        xhr.addEventListener('timeout', () => reject(new Error('Slice timeout')));
 
-        // Convert server slice quote to PriceBreakdown format
-        const slicedPricing = {
-          estimatedWeight: data.quote.estimatedWeight,
-          printTime: data.quote.printTime,
-          machineCost: data.quote.machineCost,
-          materialCost: data.quote.materialCost,
-          setupFee: data.quote.setupFee,
-          itemTotal: data.quote.itemTotal,
-          quantity: quantity,
-          subtotal: data.quote.itemTotal * quantity,
-          quoteId: data.quote.quote_id,
-          gcodeFile: data.quote.gcode_file,
-          layerCount: data.quote.layerCount,
-          source: 'server-sliced' as const,
-        };
-        console.log('💵 Setting server-sliced pricing:', slicedPricing);
-        setPriceBreakdown(slicedPricing);
-      } catch (error) {
-        console.error('❌ Server slicing error:', error);
+        xhr.timeout = 300000; // 5 minutes
+        xhr.open('POST', '/api/slicer/slice');
+        xhr.send(formData);
+      });
 
-        // Handle timeout specifically
-        if (error instanceof Error && error.name === 'AbortError') {
-          setPriceError('Slicing timeout - model is too complex. Using local estimation.');
-        } else {
-          setPriceError(error instanceof Error ? error.message : 'Failed to slice model');
-        }
-
-        // Fallback to local pricing
-        const printConfig: PrintConfig = {
-          modelId: 'temp',
-          quantity: quantity,
-          quality: quality.toLowerCase() as 'draft' | 'standard' | 'high' | 'ultra',
-          material: material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
-          color: selectedColor.value,
-          infillType: infillType.toLowerCase() as 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic',
-          infillDensity: infillDensity,
-          designGuideImages: [],
-        };
-        const localPrice = calculatePrice(printConfig, modelInfo);
-        setPriceBreakdown({ ...localPrice, source: 'local-estimation' });
-      } finally {
-        setIsLoadingPrice(false);
-      }
-    };
-
-    fetchServerSlicedQuote();
-  }, [file, modelInfo, quality, material, infillDensity, quantity, selectedColor.value, infillType, initialSliceResults]);
+      // Update pricing with slice results
+      const slicedPricing: PriceBreakdown = {
+        estimatedWeight: data.quote.estimatedWeight,
+        printTime: data.quote.printTime,
+        machineCost: data.quote.machineCost,
+        materialCost: data.quote.materialCost,
+        setupFee: data.quote.setupFee,
+        itemTotal: data.quote.itemTotal,
+        quantity: quantity,
+        subtotal: data.quote.itemTotal * quantity,
+        quoteId: data.quote.quote_id,
+        gcodeFile: data.quote.gcode_file,
+        layerCount: data.quote.layerCount,
+        source: 'server-sliced',
+      };
+      setPriceBreakdown(slicedPricing);
+      setHasUnsavedSettings(false);
+    } catch (error) {
+      console.error('❌ Slice error:', error);
+      setPriceError(error instanceof Error ? error.message : 'Failed to slice model');
+      setPriceBreakdown(null);
+    } finally {
+      setIsSlicing(false);
+    }
+  };
 
   const totalPrice = priceBreakdown?.subtotal || 0;
 
   const incrementQuantity = () => {
     setQuantity(q => q + 1);
     setHasChanges(true);
+    // Quantity change doesn't require re-slicing, just recalculates subtotal
+    if (priceBreakdown) {
+      setPriceBreakdown({
+        ...priceBreakdown,
+        quantity: quantity + 1,
+        subtotal: priceBreakdown.itemTotal * (quantity + 1),
+      });
+    }
   };
+
   const decrementQuantity = () => {
-    setQuantity(q => Math.max(1, q - 1));
+    const newQuantity = Math.max(1, quantity - 1);
+    setQuantity(newQuantity);
+    setHasChanges(true);
+    // Quantity change doesn't require re-slicing, just recalculates subtotal
+    if (priceBreakdown) {
+      setPriceBreakdown({
+        ...priceBreakdown,
+        quantity: newQuantity,
+        subtotal: priceBreakdown.itemTotal * newQuantity,
+      });
+    }
+  };
+
+  // Called when user changes settings that require re-slicing
+  const handleSettingsChange = () => {
+    setHasUnsavedSettings(true);
+    setPriceBreakdown(null); // Clear price per user's request
     setHasChanges(true);
   };
 
@@ -347,55 +284,43 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset quantity to 1 when changing model
+    // Reset state for new file
     setQuantity(1);
     setHasChanges(true);
-
-    // Start upload with progress tracking
-    setIsUploadingNewModel(true);
+    setIsUploading(true);
     setUploadProgress(0);
     setUploadedBytes(0);
     setTotalBytes(0);
     setPriceError(null);
+    setPriceBreakdown(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    // Use current sidebar settings for slicing
-    formData.append('quality', quality.toLowerCase());
-    formData.append('material', material);
-    formData.append('infillDensity', infillDensity.toString());
-    formData.append('infillType', infillType.toLowerCase());
+    console.log('📤 Starting Phase 1: Upload file');
 
     try {
-      const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhrRef.current = xhr;
+      // Phase 1: Upload file to server
+      const formData = new FormData();
+      formData.append('file', file);
 
-        // Upload progress tracking
+      const uploadData: FileUploadResponse = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        uploadXhrRef.current = xhr;
+
+        // Track upload progress
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
             setUploadedBytes(event.loaded);
             setTotalBytes(event.total);
             const percentComplete = Math.round((event.loaded / event.total) * 100);
             setUploadProgress(percentComplete);
-            console.log(`📤 Model change upload: ${percentComplete}% (${(event.loaded / 1024 / 1024).toFixed(1)} MB / ${(event.total / 1024 / 1024).toFixed(1)} MB)`);
+            console.log(`📤 Upload: ${percentComplete}%`);
           }
         });
 
-        // Upload complete
-        xhr.upload.addEventListener('load', () => {
-          console.log('✅ Upload complete, server is slicing...');
-          setSlicingInProgress(true);
-        });
-
-        // Response received
         xhr.addEventListener('load', () => {
-          setSlicingInProgress(false);
-
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const responseData = JSON.parse(xhr.responseText);
-              console.log('✅ New model sliced:', responseData);
+              console.log('✅ Upload complete:', responseData);
               resolve(responseData);
             } catch (error) {
               reject(new Error('Failed to parse response'));
@@ -403,57 +328,39 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           } else {
             try {
               const errorData = JSON.parse(xhr.responseText);
-              console.error('❌ Slicing failed:', errorData);
-              reject(new Error(errorData.error || 'Failed to slice model'));
+              console.error('❌ Upload failed:', errorData);
+              reject(new Error(errorData.error || 'Failed to upload file'));
             } catch {
-              reject(new Error(`Request failed with status ${xhr.status}`));
+              reject(new Error(`Upload failed with status ${xhr.status}`));
             }
           }
         });
 
-        // Handle errors
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error during upload'));
-        });
+        xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+        xhr.addEventListener('timeout', () => reject(new Error('Upload timeout')));
 
-        xhr.addEventListener('timeout', () => {
-          reject(new Error('Upload timeout'));
-        });
-
-        // Set timeout (2 minutes)
-        xhr.timeout = 120000;
-
-        // Send request
-        xhr.open('POST', '/api/slicer/slice');
+        xhr.timeout = 120000; // 2 minutes
+        xhr.open('POST', '/api/slicer/upload');
         xhr.send(formData);
       });
 
-      // Update pricing with new slice results
-      const slicedPricing = {
-        estimatedWeight: data.quote.estimatedWeight,
-        printTime: data.quote.printTime,
-        machineCost: data.quote.machineCost,
-        materialCost: data.quote.materialCost,
-        setupFee: data.quote.setupFee,
-        itemTotal: data.quote.itemTotal,
-        quantity: quantity,
-        subtotal: data.quote.itemTotal * quantity,
-        quoteId: data.quote.quote_id,
-        gcodeFile: data.quote.gcode_file,
-        layerCount: data.quote.layerCount,
-        source: 'server-sliced' as const,
-      };
-      setPriceBreakdown(slicedPricing);
+      // Store fileId for future slicing requests
+      setFileId(uploadData.fileId);
+      setIsUploading(false);
 
       // Notify parent to update the file
       onChangeFile(file);
 
-      setIsUploadingNewModel(false);
+      console.log('✅ Phase 1 complete. File ID:', uploadData.fileId);
+      console.log('🎯 Starting Phase 2: Auto-slice with default settings');
+
+      // Phase 2: Auto-slice with current settings (as per plan)
+      await handleSliceModel();
+
     } catch (err) {
-      console.error('Model change upload error:', err);
+      console.error('❌ Upload error:', err);
       setPriceError(err instanceof Error ? err.message : 'Upload failed');
-      setIsUploadingNewModel(false);
-      setSlicingInProgress(false);
+      setIsUploading(false);
     }
   };
 
@@ -497,7 +404,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           </p>
           <button
             onClick={handleChangeClick}
-            disabled={isUploadingNewModel}
+            disabled={isUploading || isSlicing}
             className="text-[10px] font-medium text-[#7A7A7A] hover:text-[#1F1F1F] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Change
@@ -505,7 +412,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         </div>
 
         {/* Upload Progress */}
-        {isUploadingNewModel && (
+        {isUploading && (
           <div className="flex flex-col gap-1">
             <p className="text-[12px] font-medium text-[#B7B7B7] leading-none">
               {(uploadedBytes / 1024).toFixed(0)}kb of {(totalBytes / 1024 / 1024).toFixed(0)}mb
@@ -530,7 +437,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         )}
 
         {/* Slicing Status */}
-        {slicingInProgress && !isUploadingNewModel && (
+        {isSlicing && !isUploading && (
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-[#1F1F1F] border-r-transparent"></span>
             <p className="text-[12px] font-medium text-[#1F1F1F]">Slicing model...</p>
@@ -602,7 +509,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           <div className="relative flex-1">
             <select
               value={quality}
-              onChange={(e) => { setQuality(e.target.value); setHasChanges(true); }}
+              onChange={(e) => { setQuality(e.target.value); handleSettingsChange(); }}
               className="w-full bg-[#EFEFEF] px-2 py-1 rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] appearance-none cursor-pointer leading-[25.2px] pr-7"
             >
               <option>Draft</option>
@@ -626,7 +533,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           <div className="relative flex-1">
             <select
               value={material}
-              onChange={(e) => { setMaterial(e.target.value); setHasChanges(true); }}
+              onChange={(e) => { setMaterial(e.target.value); handleSettingsChange(); }}
               className="w-full bg-[#EFEFEF] px-2 py-1 rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] appearance-none cursor-pointer leading-[25.2px] pr-7"
             >
               <option>PLA</option>
@@ -716,7 +623,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                 <div className="relative">
                   <select
                     value={infillType}
-                    onChange={(e) => { setInfillType(e.target.value); setHasChanges(true); }}
+                    onChange={(e) => { setInfillType(e.target.value); handleSettingsChange(); }}
                     className="w-full bg-[#EFEFEF] px-2 py-1 text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] appearance-none cursor-pointer leading-[1.8] pr-7"
                   >
                     <option>Cubic</option>
@@ -796,7 +703,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                     min="5"
                     max="100"
                     value={infillDensity}
-                    onChange={(e) => { setInfillDensity(parseInt(e.target.value)); setHasChanges(true); }}
+                    onChange={(e) => { setInfillDensity(parseInt(e.target.value)); handleSettingsChange(); }}
                     onMouseDown={() => setIsSliderDragging(true)}
                     onMouseUp={() => setIsSliderDragging(false)}
                     onMouseLeave={() => setIsSliderDragging(false)}
@@ -965,15 +872,10 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
             <div className="flex items-center justify-between py-1">
               <span className="text-[14px] text-[#8D8D8D] capitalize tracking-[0.28px]">Weight</span>
               <span className="text-[14px] text-[#8D8D8D]">
-                {isLoadingPrice ? (
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-[#8D8D8D] border-r-transparent"></span>
-                    Loading...
-                  </span>
-                ) : priceBreakdown?.estimatedWeight ? (
+                {priceBreakdown?.estimatedWeight ? (
                   `${priceBreakdown.estimatedWeight.toFixed(1)}g`
                 ) : (
-                  'Calculating...'
+                  '--'
                 )}
               </span>
             </div>
@@ -985,14 +887,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                 )}
               </div>
               <span className="text-[14px] font-semibold text-[#1F1F1F] uppercase">
-                {isLoadingPrice ? (
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-[#1F1F1F] border-r-transparent"></span>
-                    Loading...
-                  </span>
-                ) : (
-                  `₦${totalPrice.toLocaleString()}`
-                )}
+                ₦{totalPrice.toLocaleString()}
               </span>
             </div>
           </div>
@@ -1001,15 +896,21 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         {/* Action Buttons */}
         <div className="flex flex-col items-center gap-2">
           <button
-            onClick={handleAddToBag}
-            className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white"
+            onClick={hasUnsavedSettings ? handleSliceModel : handleAddToBag}
+            disabled={isSlicing || isUploading}
+            className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: addedToBag
                 ? 'linear-gradient(to right, #22C55E 0%, #16A34A 100%)'
+                : hasUnsavedSettings
+                ? 'linear-gradient(to right, #F4008A 0%, #CF2886 100%)'
                 : 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
             }}
           >
-            {addedToBag ? 'Added!' : 'Add to Bag'}
+            {isSlicing ? 'Slicing...' :
+             addedToBag ? 'Added!' :
+             hasUnsavedSettings ? 'Re-slice Model' :
+             'Add to Bag'}
           </button>
 
           <button

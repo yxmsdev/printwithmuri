@@ -267,10 +267,11 @@ export async function sliceModel(
 }
 
 /**
- * Clean up old G-code files (older than TTL)
+ * Clean up old G-code files (older than TTL) and expired upload files
  */
 export async function cleanupOldFiles(ttlHours: number = 24): Promise<void> {
   try {
+    // Clean up old G-code files based on file age
     const files = await fs.readdir(TEMP_DIR);
     const now = Date.now();
     const ttlMs = ttlHours * 60 * 60 * 1000;
@@ -287,12 +288,68 @@ export async function cleanupOldFiles(ttlHours: number = 24): Promise<void> {
             console.log(`🗑️ Deleted old G-code file: ${file}`);
           }
         } catch (fileError) {
-          console.warn(`Failed to process file ${file}:`, fileError);
+          console.warn(`Failed to process G-code file ${file}:`, fileError);
         }
       }
     }
+
+    // Clean up expired upload files from database and disk
+    await cleanupExpiredUploads();
   } catch (error) {
     console.error('Failed to cleanup old files:', error);
+  }
+}
+
+/**
+ * Clean up expired upload files from database and disk
+ */
+export async function cleanupExpiredUploads(): Promise<void> {
+  try {
+    // Import createClient dynamically to avoid circular dependencies
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+
+    // Find expired uploads
+    const { data: expiredUploads, error } = await supabase
+      .from('temp_uploads')
+      .select('*')
+      .lt('expires_at', new Date().toISOString());
+
+    if (error) {
+      console.error('Failed to query expired uploads:', error);
+      return;
+    }
+
+    if (!expiredUploads || expiredUploads.length === 0) {
+      return;
+    }
+
+    console.log(`🗑️ Found ${expiredUploads.length} expired upload(s) to clean up`);
+
+    // Delete files from disk and database
+    for (const upload of expiredUploads) {
+      // Delete file from disk
+      try {
+        await fs.unlink(upload.file_path);
+        console.log(`🗑️ Deleted expired upload file: ${upload.file_name}`);
+      } catch (fileError) {
+        console.warn(`Failed to delete upload file ${upload.file_name}:`, fileError);
+      }
+
+      // Delete database record
+      const { error: deleteError } = await supabase
+        .from('temp_uploads')
+        .delete()
+        .eq('id', upload.id);
+
+      if (deleteError) {
+        console.warn(`Failed to delete upload record ${upload.id}:`, deleteError);
+      }
+    }
+
+    console.log(`✅ Cleanup completed: removed ${expiredUploads.length} expired upload(s)`);
+  } catch (error) {
+    console.error('Failed to cleanup expired uploads:', error);
   }
 }
 
