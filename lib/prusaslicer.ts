@@ -68,9 +68,17 @@ async function buildPrusaSlicerArgs(
   const configDir = process.env.NODE_ENV === 'production'
     ? '/app/config/prusaslicer'
     : path.join(process.cwd(), 'config/prusaslicer');
+
+  console.log(`🔧 Config directory: ${configDir} (NODE_ENV: ${process.env.NODE_ENV})`);
+
   const printerProfile = `${configDir}/printer/Generic_FDM.ini`;
   const filamentProfile = `${configDir}/filament/${material}.ini`;
   const printProfile = `${configDir}/print/Standard_Quality.ini`;
+
+  console.log(`📁 Looking for config files:`);
+  console.log(`   Printer: ${printerProfile}`);
+  console.log(`   Material: ${filamentProfile}`);
+  console.log(`   Quality: ${printProfile}`);
 
   // Validate config files exist before attempting to slice
   await validateConfigFile(printerProfile, 'Printer profile');
