@@ -99,15 +99,7 @@ async function buildPrusaSlicerArgs(
   await validateConfigFile(filamentProfile, `Filament profile for ${material}`);
   await validateConfigFile(printProfile, 'Print quality profile');
 
-  // Layer heights by quality
-  const layerHeights: Record<SlicerConfig['quality'], number> = {
-    draft: 0.3,
-    standard: 0.2,
-    high: 0.1,
-    ultra: 0.05,
-  };
 
-  const layerHeight = layerHeights[quality];
 
   // Build arguments array (execFile handles escaping automatically)
   const args: string[] = [
