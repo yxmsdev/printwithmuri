@@ -131,11 +131,19 @@ const FileUpload: React.FC<FileUploadProps> = ({
         });
 
         // Phase 2: Slice with the fileId
-        console.log('🔪 Phase 2: Slicing with fileId:', uploadResponse.fileId);
+        const extractedFileId = uploadResponse.fileId;
+        console.log('🔪 Phase 2: Slicing with fileId:', extractedFileId);
+        console.log('📦 Full upload response:', JSON.stringify(uploadResponse));
+        
+        if (!extractedFileId) {
+          throw new Error('Upload succeeded but no fileId was returned');
+        }
+        
         setUploadProgress(50);
 
         const sliceFormData = new FormData();
-        sliceFormData.append('fileId', uploadResponse.fileId);
+        sliceFormData.append('fileId', extractedFileId);
+        console.log('📤 Slice formData fileId:', sliceFormData.get('fileId'));
         sliceFormData.append('quality', 'standard');
         sliceFormData.append('material', 'PLA');
         sliceFormData.append('infillDensity', '25');
