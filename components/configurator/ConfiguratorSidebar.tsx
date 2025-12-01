@@ -66,6 +66,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   const [infillType, setInfillType] = useState(initialConfig?.infillType ?? 'Honeycomb');
   const [infillDensity, setInfillDensity] = useState(initialConfig?.infillDensity ?? 25);
   const [isSliderDragging, setIsSliderDragging] = useState(false);
+  const [isSolid, setIsSolid] = useState(initialConfig?.infillDensity === 100);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [isDraggingRef, setIsDraggingRef] = useState(false);
@@ -696,9 +697,32 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
 
               {/* Infill Density Slider */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
-                  Infill Density
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
+                    Infill Density
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={isSolid}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsSolid(checked);
+                        if (checked) {
+                          setInfillDensity(100);
+                        } else {
+                          setInfillDensity(25);
+                        }
+                        handleSettingsChange();
+                      }}
+                      className="w-3 h-3 rounded-sm border border-[#B7B7B7] checked:bg-[#F4008A] checked:border-[#F4008A] cursor-pointer appearance-none relative
+                        before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-white before:text-[8px] before:opacity-0 checked:before:opacity-100"
+                    />
+                    <span className="text-[10px] font-medium text-[#8D8D8D] group-hover:text-[#1F1F1F] transition-colors">
+                      Solid
+                    </span>
+                  </label>
+                </div>
                 <div className="flex justify-between text-[10px] font-light text-[#8D8D8D] tracking-[-0.2px]">
                   <span>Low</span>
                   <span>High</span>
@@ -720,7 +744,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                   
                   {/* Pink Gradient Fill - covers tick marks */}
                   <div
-                    className="absolute left-0 top-0 h-full rounded-[2px] flex items-center"
+                    className="absolute left-0 top-0 h-full rounded-[2px] flex items-center transition-all duration-500 ease-out"
                     style={{
                       width: `max(26px, ${infillDensity}%)`,
                       background: 'linear-gradient(to right, #F4008A 0%, #F76EB3 50%, #FE62BA 100%)'
@@ -752,7 +776,12 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                     min="5"
                     max="100"
                     value={infillDensity}
-                    onChange={(e) => { setInfillDensity(parseInt(e.target.value)); handleSettingsChange(); }}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      setInfillDensity(value);
+                      setIsSolid(value === 100);
+                      handleSettingsChange();
+                    }}
                     onMouseDown={() => setIsSliderDragging(true)}
                     onMouseUp={() => setIsSliderDragging(false)}
                     onMouseLeave={() => setIsSliderDragging(false)}
