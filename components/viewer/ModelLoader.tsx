@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
@@ -21,9 +22,21 @@ export default function ModelLoader({
   const meshRef = useRef<THREE.Mesh>(null);
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
   const [modelHeight, setModelHeight] = useState<number>(0);
+  const loadedUrlRef = useRef<string | null>(null); // Track which URL we've already loaded
+  const { invalidate } = useThree();
+
+  // Memoize the callback to prevent re-renders
+  const handleModelLoaded = useCallback((modelInfo: ModelInfo) => {
+    if (onModelLoaded) {
+      onModelLoaded(modelInfo);
+    }
+  }, [onModelLoaded]);
 
   useEffect(() => {
     if (!fileUrl || fileUrl === '') return;
+    
+    // Prevent reloading the same file
+    if (loadedUrlRef.current === fileUrl) return;
 
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
 
@@ -37,13 +50,13 @@ export default function ModelLoader({
           const loader = new STLLoader();
           const loadedGeometry = loader.parse(buffer);
 
-          // Parse model info
+          // Parse model info - only call once per URL
           const modelInfo = await parseSTL(buffer);
-          if (onModelLoaded) {
-            onModelLoaded(modelInfo);
-          }
+          handleModelLoaded(modelInfo);
 
           setGeometry(loadedGeometry);
+          loadedUrlRef.current = fileUrl; // Mark as loaded
+          invalidate(); // Trigger render for on-demand mode
         } else if (fileExtension === 'obj') {
           // Load OBJ
           const response = await fetch(fileUrl);
@@ -52,11 +65,9 @@ export default function ModelLoader({
           const loader = new OBJLoader();
           const object = loader.parse(text);
 
-          // Parse model info
+          // Parse model info - only call once per URL
           const modelInfo = await parseOBJ(text);
-          if (onModelLoaded) {
-            onModelLoaded(modelInfo);
-          }
+          handleModelLoaded(modelInfo);
 
           // Extract geometry from object
           let combinedGeometry = new THREE.BufferGeometry();
@@ -84,6 +95,8 @@ export default function ModelLoader({
           });
 
           setGeometry(combinedGeometry);
+          loadedUrlRef.current = fileUrl; // Mark as loaded
+          invalidate(); // Trigger render for on-demand mode
         } else if (fileExtension === '3mf') {
           // 3MF support - placeholder for now
           // You may need to use three-3mf-loader or implement custom loader
@@ -95,7 +108,7 @@ export default function ModelLoader({
     }
 
     loadModel();
-  }, [fileUrl, fileName, onModelLoaded]);
+  }, [fileUrl, fileName, handleModelLoaded, invalidate]);
 
   // Center and auto-scale model when geometry loads
   useEffect(() => {
@@ -122,8 +135,11 @@ export default function ModelLoader({
 
     // Store the scaled height (Z dimension becomes height after rotation)
     setModelHeight((size.z / 2) * scale);
+    
+    // Trigger re-render after model is positioned
+    invalidate();
 
-  }, [geometry]);
+  }, [geometry, invalidate]);
 
   if (!geometry) {
     return null;

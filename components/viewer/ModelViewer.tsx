@@ -1,13 +1,29 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, PerspectiveCamera } from '@react-three/drei';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import ModelLoader from './ModelLoader';
 import ViewerControls from './ViewerControls';
 import AxisLabels from './AxisLabels';
 import { ModelInfo } from '@/types';
+
+// Component to trigger initial render and handle invalidation
+function RenderController() {
+  const { invalidate } = useThree();
+  const hasRenderedRef = useRef(false);
+  
+  useEffect(() => {
+    // Trigger initial render
+    if (!hasRenderedRef.current) {
+      invalidate();
+      hasRenderedRef.current = true;
+    }
+  }, [invalidate]);
+  
+  return null;
+}
 
 // Custom axes helper with colors matching the UI labels (Z up = blue, Y depth = green)
 function CustomAxesHelper({ size = 5 }: { size?: number }) {
@@ -68,7 +84,8 @@ export default function ModelViewer({
 
   return (
     <div className="relative w-full h-full min-h-[500px] bg-[#EDEDED]">
-      <Canvas shadows>
+      <Canvas shadows frameloop="demand">
+        <RenderController />
         <PerspectiveCamera makeDefault position={[20, 4, 25]} />
 
         {/* Lighting */}
