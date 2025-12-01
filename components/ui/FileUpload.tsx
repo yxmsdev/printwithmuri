@@ -72,16 +72,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
         return;
       }
 
-      // Production mode: Real upload and slicing
-      const formData = new FormData();
-      formData.append('file', file);
-      // Default settings for initial slice
-      formData.append('quality', 'standard');
-      formData.append('material', 'PLA');
-      formData.append('infillDensity', '25');
-
+      // Production mode: Two-phase upload and slicing
       try {
-        const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
+        // Phase 1: Upload file to get a fileId
+        console.log('📤 Phase 1: Uploading file...');
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+
+        const uploadResponse = await new Promise<{ fileId: string }>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhrRef.current = xhr;
 
@@ -90,26 +88,78 @@ const FileUpload: React.FC<FileUploadProps> = ({
             if (event.lengthComputable) {
               setUploadedBytes(event.loaded);
               setTotalBytes(event.total);
-              const percentComplete = Math.round((event.loaded / event.total) * 100);
+              // Cap at 50% since slicing will be the second half
+              const percentComplete = Math.round((event.loaded / event.total) * 50);
               setUploadProgress(percentComplete);
               console.log(`📤 Upload progress: ${percentComplete}% (${(event.loaded / 1024 / 1024).toFixed(1)} MB / ${(event.total / 1024 / 1024).toFixed(1)} MB)`);
             }
           });
 
-          // Upload complete, now slicing on server
           xhr.upload.addEventListener('load', () => {
-            console.log('✅ Upload complete, server is slicing...');
+            console.log('✅ File upload complete, processing...');
           });
 
-          // Response received
           xhr.addEventListener('load', () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               try {
                 const responseData = JSON.parse(xhr.responseText);
-                console.log('✅ Server slice quote received:', responseData);
+                console.log('✅ Upload response:', responseData);
+                if (responseData.success && responseData.fileId) {
+                  resolve(responseData);
+                } else {
+                  reject(new Error(responseData.error || 'Upload failed'));
+                }
+              } catch {
+                reject(new Error('Failed to parse upload response'));
+              }
+            } else {
+              try {
+                const errorData = JSON.parse(xhr.responseText);
+                reject(new Error(errorData.error || 'Upload failed'));
+              } catch {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+          xhr.addEventListener('timeout', () => reject(new Error('Upload timeout')));
+
+          xhr.timeout = 60000; // 1 minute for upload
+          xhr.open('POST', '/api/slicer/upload');
+          xhr.send(uploadFormData);
+        });
+
+        // Phase 2: Slice with the fileId
+        console.log('🔪 Phase 2: Slicing with fileId:', uploadResponse.fileId);
+        setUploadProgress(50);
+
+        const sliceFormData = new FormData();
+        sliceFormData.append('fileId', uploadResponse.fileId);
+        sliceFormData.append('quality', 'standard');
+        sliceFormData.append('material', 'PLA');
+        sliceFormData.append('infillDensity', '25');
+        sliceFormData.append('infillType', 'honeycomb');
+
+        const data: SlicerQuoteResponse = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhrRef.current = xhr;
+
+          // Simulate progress during slicing
+          const progressInterval = setInterval(() => {
+            setUploadProgress(prev => Math.min(prev + 5, 95));
+          }, 1000);
+
+          xhr.addEventListener('load', () => {
+            clearInterval(progressInterval);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const responseData = JSON.parse(xhr.responseText);
+                console.log('✅ Slice quote received:', responseData);
+                setUploadProgress(100);
                 resolve(responseData);
-              } catch (error) {
-                reject(new Error('Failed to parse response'));
+              } catch {
+                reject(new Error('Failed to parse slice response'));
               }
             } else {
               try {
@@ -117,26 +167,24 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 console.error('❌ Slicing failed:', errorData);
                 reject(new Error(errorData.error || 'Failed to slice model'));
               } catch {
-                reject(new Error(`Request failed with status ${xhr.status}`));
+                reject(new Error(`Slice failed with status ${xhr.status}`));
               }
             }
           });
 
-          // Handle errors
           xhr.addEventListener('error', () => {
-            reject(new Error('Network error during upload'));
+            clearInterval(progressInterval);
+            reject(new Error('Network error during slicing'));
           });
 
           xhr.addEventListener('timeout', () => {
-            reject(new Error('Upload timeout'));
+            clearInterval(progressInterval);
+            reject(new Error('Slicing timeout'));
           });
 
-          // Set timeout (2 minutes)
-          xhr.timeout = 120000;
-
-          // Send request
+          xhr.timeout = 120000; // 2 minutes for slicing
           xhr.open('POST', '/api/slicer/slice');
-          xhr.send(formData);
+          xhr.send(sliceFormData);
         });
 
         setSliceResults(data);
