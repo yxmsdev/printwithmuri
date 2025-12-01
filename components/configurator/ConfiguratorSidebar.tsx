@@ -29,6 +29,7 @@ interface ConfiguratorSidebarProps {
   onSaveAsDraft: () => void;
   initialConfig?: Partial<ConfigState>;
   initialSliceResults?: SlicerQuoteResponse | null;
+  initialFileId?: string | null;
 }
 
 const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSidebarProps>(({
@@ -40,6 +41,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   onSaveAsDraft,
   initialConfig,
   initialSliceResults,
+  initialFileId,
 }, ref) => {
   const [quantity, setQuantity] = useState(initialConfig?.quantity ?? 1);
   const [quality, setQuality] = useState(initialConfig?.quality ?? 'Standard');
@@ -78,7 +80,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   const referenceInputRef = useRef<HTMLInputElement>(null);
 
   // Two-phase architecture state
-  const [fileId, setFileId] = useState<string | null>(null);
+  const [fileId, setFileId] = useState<string | null>(initialFileId ?? null);
   const [hasUnsavedSettings, setHasUnsavedSettings] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedBytes, setUploadedBytes] = useState(0);
@@ -90,6 +92,14 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   
   const addItem = useBagStore((state) => state.addItem);
   const openBag = useBagStore((state) => state.openBag);
+
+  // Initialize fileId from initial fileId (from FileUpload)
+  useEffect(() => {
+    if (initialFileId) {
+      console.log('📁 Initializing fileId from props:', initialFileId);
+      setFileId(initialFileId);
+    }
+  }, [initialFileId]);
 
   // Initialize price breakdown from initial slice results (from FileUpload)
   useEffect(() => {

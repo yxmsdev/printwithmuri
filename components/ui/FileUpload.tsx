@@ -6,7 +6,7 @@ import { useDropzone } from 'react-dropzone';
 import { SlicerQuoteResponse } from '@/types';
 
 interface FileUploadProps {
-  onFileSelect?: (file: File, sliceResults: SlicerQuoteResponse) => void;
+  onFileSelect?: (file: File, sliceResults: SlicerQuoteResponse, fileId: string) => void;
   maxSize?: number;
 }
 
@@ -21,6 +21,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadComplete, setUploadComplete] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sliceResults, setSliceResults] = useState<SlicerQuoteResponse | null>(null);
+  const [currentFileId, setCurrentFileId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
 
@@ -196,6 +197,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         });
 
         setSliceResults(data);
+        setCurrentFileId(extractedFileId); // Store fileId for passing to ConfiguratorSidebar
         setUploadComplete(true);
         setIsUploading(false);
       } catch (err) {
@@ -230,8 +232,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   });
 
   const handleContinue = () => {
-    if (selectedFile && sliceResults && onFileSelect) {
-      onFileSelect(selectedFile, sliceResults);
+    if (selectedFile && sliceResults && currentFileId && onFileSelect) {
+      onFileSelect(selectedFile, sliceResults, currentFileId);
     }
   };
 
@@ -244,6 +246,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     // Reset state
     setSelectedFile(null);
     setSliceResults(null);
+    setCurrentFileId(null);
     setIsUploading(false);
     setUploadComplete(false);
     setUploadProgress(0);

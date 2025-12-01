@@ -31,6 +31,7 @@ export default function Home() {
   const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null);
   const [showDraftSaved, setShowDraftSaved] = useState(false);
   const [initialSliceResults, setInitialSliceResults] = useState<SlicerQuoteResponse | null>(null);
+  const [initialFileId, setInitialFileId] = useState<string | null>(null);
 
   const getDraft = useDraftsStore((state) => state.getDraft);
   const addDraft = useDraftsStore((state) => state.addDraft);
@@ -57,6 +58,7 @@ export default function Home() {
       setInitialConfig(undefined);
       setLoadedDraftId(null);
       setInitialSliceResults(null);
+      setInitialFileId(null);
 
       // Clear the URL parameter
       router.replace('/', { scroll: false });
@@ -83,7 +85,7 @@ export default function Home() {
     }
   }, [searchParams, getDraft, router, selectedFile]);
 
-  const handleFileSelect = (file: File, sliceResults: SlicerQuoteResponse) => {
+  const handleFileSelect = (file: File, sliceResults: SlicerQuoteResponse, fileId: string) => {
     // Clean up old URL if it exists
     if (selectedFile?.url) {
       URL.revokeObjectURL(selectedFile.url);
@@ -91,6 +93,8 @@ export default function Home() {
     const url = URL.createObjectURL(file);
     setSelectedFile({ url, name: file.name, file });
     setInitialSliceResults(sliceResults);
+    setInitialFileId(fileId);
+    console.log('📁 File selected with fileId:', fileId);
 
     // Clear loaded draft since we have a new file
     setLoadedDraftId(null);
@@ -177,6 +181,7 @@ export default function Home() {
               modelInfo={modelInfo}
               initialConfig={initialConfig}
               initialSliceResults={initialSliceResults}
+              initialFileId={initialFileId}
               onChangeFile={(file: File) => {
                 // Clean up old URL
                 if (selectedFile?.url) {
