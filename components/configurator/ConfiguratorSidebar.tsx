@@ -1,7 +1,7 @@
 'use client';
 
 import { ModelInfo, PrintConfig, PriceBreakdown, SlicerQuoteResponse, FileUploadResponse } from '@/types';
-import { useState, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
 import { calculatePrice } from '@/lib/pricing';
@@ -90,6 +90,32 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   
   const addItem = useBagStore((state) => state.addItem);
   const openBag = useBagStore((state) => state.openBag);
+
+  // Initialize price breakdown from initial slice results (from FileUpload)
+  useEffect(() => {
+    if (initialSliceResults?.success && initialSliceResults.quote) {
+      const quote = initialSliceResults.quote;
+      console.log('📊 Initializing price from initial slice results:', quote);
+      
+      const initialPricing: PriceBreakdown = {
+        estimatedWeight: quote.estimatedWeight,
+        printTime: quote.printTime,
+        machineCost: quote.machineCost,
+        materialCost: quote.materialCost,
+        setupFee: quote.setupFee,
+        itemTotal: quote.itemTotal,
+        quantity: quantity,
+        subtotal: quote.itemTotal * quantity,
+        quoteId: quote.quote_id,
+        gcodeFile: quote.gcode_file,
+        layerCount: quote.layerCount,
+        source: 'server-sliced',
+      };
+      
+      setPriceBreakdown(initialPricing);
+      setHasUnsavedSettings(false);
+    }
+  }, [initialSliceResults]);
 
   // Expose getConfig method via ref
   useImperativeHandle(ref, () => ({
