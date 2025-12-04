@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
-  output: 'standalone',
+  // output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },
