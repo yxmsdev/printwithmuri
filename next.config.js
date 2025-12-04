@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
-  // output: 'standalone',
+  // output: 'standalone', // Disabled to fix Docker build error (ENOENT: /app/printwithmuri)
   eslint: {
     ignoreDuringBuilds: true,
   },

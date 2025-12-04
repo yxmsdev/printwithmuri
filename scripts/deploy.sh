@@ -10,9 +10,20 @@ APP_NAME="print-with-muri"
 
 echo "🚀 Starting deployment to $DROPLET_IP..."
 
+# Load environment variables
+if [ -f .env.production ]; then
+  export $(grep -v '^#' .env.production | xargs)
+elif [ -f .env.local ]; then
+  echo "⚠️ .env.production not found, using .env.local for build args"
+  export $(grep -v '^#' .env.local | xargs)
+fi
+
 # Build Docker image
 echo "📦 Building Docker image..."
-docker build -t $APP_NAME:latest .
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+  -t $APP_NAME:latest .
 
 # Save Docker image to tar
 echo "💾 Saving Docker image..."
