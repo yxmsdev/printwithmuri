@@ -64,6 +64,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source files
 COPY . .
 
+# Remove git metadata and cached build files to prevent path resolution issues
+RUN rm -rf .git .next
+
 # Build Next.js application
 RUN npm run build
 
