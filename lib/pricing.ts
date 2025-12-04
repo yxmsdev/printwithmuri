@@ -22,9 +22,9 @@ const HOURLY_RATE = 2000;
 
 // Material cost per gram in Naira
 const MATERIAL_RATES = {
-  PLA: 400,
-  PETG: 500,
-  ABS: 700,
+  PLA: 450,
+  PETG: 600,
+  ABS: 800,
   Resin: 1200,
 };
 
