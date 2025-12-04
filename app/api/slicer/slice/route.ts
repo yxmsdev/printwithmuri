@@ -12,17 +12,17 @@ const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 
 // Material cost per gram in NGN
 const MATERIAL_RATES: Record<string, number> = {
-  PLA: 150,
-  PETG: 180,
-  ABS: 170,
-  Resin: 350,
+  PLA: 450,
+  PETG: 600,
+  ABS: 800,
+  Resin: 1200,
 };
 
 // Machine cost per hour
 const MACHINE_COST_PER_HOUR = 2000; // ₦2000/hour
 
 // Setup fee per unique model
-const SETUP_FEE = 500; // ₦500
+const SETUP_FEE = 2500; // ₦2500
 
 let isSlicing = false;
 const sliceQueue: {

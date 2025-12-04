@@ -22,14 +22,14 @@ const HOURLY_RATE = 2000;
 
 // Material cost per gram in Naira
 const MATERIAL_RATES = {
-  PLA: 150,
-  PETG: 180,
-  ABS: 170,
-  Resin: 350,
+  PLA: 400,
+  PETG: 500,
+  ABS: 700,
+  Resin: 1200,
 };
 
-const SETUP_FEE = 500; // ₦ per unique model
-const TIME_BUFFER = 1.15; // 15% buffer for supports, travel, etc.
+const SETUP_FEE = 2500; // ₦ per unique model
+const TIME_BUFFER = 3; // 15% buffer for supports, travel, etc.
 
 /**
  * Calculate the complete price breakdown for a print job
