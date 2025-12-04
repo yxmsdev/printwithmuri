@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import UserTypeSelector from '@/components/auth/UserTypeSelector';
+import { professions, industries } from '@/lib/professions-industries';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -17,19 +19,27 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [userType, setUserType] = useState<'business' | 'creator'>('creator');
+  const [profession, setProfession] = useState('');
+  const [professionOther, setProfessionOther] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [industryOther, setIndustryOther] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [surnameError, setSurnameError] = useState('');
   const [companyNameError, setCompanyNameError] = useState('');
   const [contactNameError, setContactNameError] = useState('');
+  const [professionError, setProfessionError] = useState('');
+  const [industryError, setIndustryError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleGoogleSignIn = () => {
-    // TODO: Implement Google Sign-In
-    console.log('Google Sign-In clicked');
+  const handleGoogleSignIn = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setEmailError(error.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +50,8 @@ export default function SignUpPage() {
     setSurnameError('');
     setCompanyNameError('');
     setContactNameError('');
+    setProfessionError('');
+    setIndustryError('');
     setEmailError('');
     setPasswordError('');
     setConfirmPasswordError('');
@@ -57,6 +69,12 @@ export default function SignUpPage() {
         setSurnameError('Surname is required');
         hasError = true;
       }
+
+      // Validate profession: only required if "Other" is selected but not specified
+      if (profession === 'Other' && !professionOther.trim()) {
+        setProfessionError('Please specify your profession');
+        hasError = true;
+      }
     } else {
       // Business validation
       if (!companyName.trim()) {
@@ -66,6 +84,12 @@ export default function SignUpPage() {
 
       if (!contactName.trim()) {
         setContactNameError('Contact name is required');
+        hasError = true;
+      }
+
+      // Validate industry: only required if "Other" is selected but not specified
+      if (industry === 'Other' && !industryOther.trim()) {
+        setIndustryError('Please specify your industry');
         hasError = true;
       }
     }
@@ -90,7 +114,18 @@ export default function SignUpPage() {
       ? `${firstName} ${surname}`.trim()
       : contactName.trim() || companyName.trim();
 
-    const { error } = await signUp(email, password, fullName, userType);
+    // Determine final profession/industry values
+    const finalProfession = profession === 'Other' ? professionOther : profession;
+    const finalIndustry = industry === 'Other' ? industryOther : industry;
+
+    const { error } = await signUp(
+      email,
+      password,
+      fullName,
+      userType,
+      finalProfession || undefined,
+      finalIndustry || undefined
+    );
 
     if (error) {
       const errorMessage = error.message.toLowerCase();
@@ -232,6 +267,60 @@ export default function SignUpPage() {
                     <p className="text-[12px] text-red-600 mt-1">{contactNameError}</p>
                   )}
                 </div>
+
+                {/* Industry (Optional) */}
+                <div className="flex flex-col gap-[4px]">
+                  <label htmlFor="industry" className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
+                    Industry <span className="text-[#B7B7B7]">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="industry"
+                      value={industry}
+                      onChange={(e) => {
+                        setIndustry(e.target.value);
+                        setIndustryError('');
+                        if (e.target.value !== 'Other') {
+                          setIndustryOther('');
+                        }
+                      }}
+                      disabled={loading}
+                      className={`bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full rounded-[2px] appearance-none cursor-pointer ${
+                        industryError ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-[#F4008A]'
+                      } ${!industry ? 'text-[#8D8D8D]' : ''}`}
+                    >
+                      <option value="">Select industry</option>
+                      {industries.map((ind) => (
+                        <option key={ind} value={ind}>{ind}</option>
+                      ))}
+                    </select>
+                    <Image
+                      src="/images/icons/dropdown.svg"
+                      alt=""
+                      width={10}
+                      height={6}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                    />
+                  </div>
+                  {industry === 'Other' && (
+                    <input
+                      type="text"
+                      value={industryOther}
+                      onChange={(e) => {
+                        setIndustryOther(e.target.value);
+                        setIndustryError('');
+                      }}
+                      placeholder="Please specify your industry"
+                      disabled={loading}
+                      className={`bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full rounded-[2px] mt-2 ${
+                        industryError ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-[#F4008A]'
+                      }`}
+                    />
+                  )}
+                  {industryError && (
+                    <p className="text-[12px] text-red-600 mt-1">{industryError}</p>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -282,6 +371,60 @@ export default function SignUpPage() {
                   />
                   {surnameError && (
                     <p className="text-[12px] text-red-600 mt-1">{surnameError}</p>
+                  )}
+                </div>
+
+                {/* Profession (Optional) */}
+                <div className="flex flex-col gap-[4px]">
+                  <label htmlFor="profession" className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
+                    Profession <span className="text-[#B7B7B7]">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="profession"
+                      value={profession}
+                      onChange={(e) => {
+                        setProfession(e.target.value);
+                        setProfessionError('');
+                        if (e.target.value !== 'Other') {
+                          setProfessionOther('');
+                        }
+                      }}
+                      disabled={loading}
+                      className={`bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full rounded-[2px] appearance-none cursor-pointer ${
+                        professionError ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-[#F4008A]'
+                      } ${!profession ? 'text-[#8D8D8D]' : ''}`}
+                    >
+                      <option value="">Select profession</option>
+                      {professions.map((prof) => (
+                        <option key={prof} value={prof}>{prof}</option>
+                      ))}
+                    </select>
+                    <Image
+                      src="/images/icons/dropdown.svg"
+                      alt=""
+                      width={10}
+                      height={6}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                    />
+                  </div>
+                  {profession === 'Other' && (
+                    <input
+                      type="text"
+                      value={professionOther}
+                      onChange={(e) => {
+                        setProfessionOther(e.target.value);
+                        setProfessionError('');
+                      }}
+                      placeholder="Please specify your profession"
+                      disabled={loading}
+                      className={`bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full rounded-[2px] mt-2 ${
+                        professionError ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-[#F4008A]'
+                      }`}
+                    />
+                  )}
+                  {professionError && (
+                    <p className="text-[12px] text-red-600 mt-1">{professionError}</p>
                   )}
                 </div>
               </>

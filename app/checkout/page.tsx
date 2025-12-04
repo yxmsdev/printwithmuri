@@ -4,8 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useBagStore } from '@/stores/useBagStore';
 import { useOrdersStore, createOrderFromCheckout } from '@/stores/useOrdersStore';
+
+// Dynamically import PaystackButton to avoid SSR issues
+const PaystackButton = dynamic(
+  () => import('react-paystack').then((mod) => mod.PaystackButton),
+  { ssr: false }
+);
 
 interface ShippingAddress {
   fullName: string;
@@ -147,31 +154,85 @@ export default function CheckoutPage() {
         }
       }
 
-      // Simulate other payment methods
-      setTimeout(() => {
-        // Create payment reference (simulated)
-        const paymentReference = `PAY-${Date.now().toString(36).toUpperCase()}`;
+      // For Paystack, validation is done, payment will be triggered by PaystackButton
+      // Reset processing state to allow button click
+      setIsProcessing(false);
+    } catch (error) {
+      console.error('Payment Error:', error);
+      alert('Payment initialization failed. Please try again.');
+      setIsProcessing(false);
+    }
+  };
 
+  // Paystack configuration
+  const paystackConfig = {
+    reference: `MUR-${Date.now()}`,
+    email: shippingAddress.email,
+    amount: total * 100, // Paystack expects amount in kobo (smallest currency unit)
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+    metadata: {
+      custom_fields: [
+        {
+          display_name: 'Customer Name',
+          variable_name: 'customer_name',
+          value: shippingAddress.fullName,
+        },
+        {
+          display_name: 'Phone Number',
+          variable_name: 'phone_number',
+          value: shippingAddress.phone,
+        },
+      ],
+    },
+  };
+
+  // Paystack payment callbacks
+  const handlePaystackSuccess = async (reference: any) => {
+    setIsProcessing(true);
+
+    try {
+      // Verify payment with our backend
+      const response = await fetch('/api/payments/paystack/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reference: reference.reference,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.verified) {
         // Create and save the order
         const orderData = createOrderFromCheckout(
           items,
           shippingAddress,
           subtotal,
           deliveryFee,
-          paymentReference
+          reference.reference
         );
 
         const orderId = addOrder(orderData);
 
-        // Clear bag and redirect to confirmation with order ID
+        // Clear bag and redirect to confirmation
         clearBag();
         router.push(`/checkout/confirmation?order=${orderId}`);
-      }, 2000);
+      } else {
+        alert('Payment verification failed. Please contact support.');
+        setIsProcessing(false);
+      }
     } catch (error) {
-      console.error('Payment Error:', error);
-      alert('Payment initialization failed. Please try again.');
+      console.error('Payment verification error:', error);
+      alert('Payment verification failed. Please contact support.');
       setIsProcessing(false);
     }
+  };
+
+  const handlePaystackClose = () => {
+    console.log('Payment popup closed');
+    setIsProcessing(false);
   };
 
   if (items.length === 0) {
@@ -558,24 +619,42 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="rounded-[2px] w-full mt-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
-                  style={{ background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)' }}
-                >
-                  {isProcessing ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    `Pay ₦${total.toLocaleString()}`
-                  )}
-                </button>
+                {paymentMethod === 'paystack' ? (
+                  <div className="w-full mt-6">
+                    <PaystackButton
+                      {...paystackConfig}
+                      text={isProcessing ? 'Processing...' : `Pay ₦${total.toLocaleString()}`}
+                      onSuccess={handlePaystackSuccess}
+                      onClose={handlePaystackClose}
+                      disabled={isProcessing}
+                      className="rounded-[2px] w-full py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce paystack-button"
+                    />
+                    <style jsx>{`
+                      :global(.paystack-button) {
+                        background: linear-gradient(180deg, #464750 21.275%, #000000 100%);
+                      }
+                    `}</style>
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="rounded-[2px] w-full mt-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
+                    style={{ background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)' }}
+                  >
+                    {isProcessing ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      `Pay ₦${total.toLocaleString()}`
+                    )}
+                  </button>
+                )}
 
                 <p className="text-[10px] text-[#8D8D8D] text-center mt-4">
                   By placing this order, you agree to our{' '}

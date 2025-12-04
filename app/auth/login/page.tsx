@@ -7,16 +7,18 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleGoogleSignIn = () => {
-    // TODO: Implement Google Sign-In
-    console.log('Google Sign-In clicked');
+  const handleGoogleSignIn = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setEmailError(error.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

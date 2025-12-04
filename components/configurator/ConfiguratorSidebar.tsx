@@ -701,7 +701,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                   <label className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
                     Infill Density
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer group bg-[#EFEFEF] px-[8px] py-[8px] rounded-[2px] hover:bg-[#E6E6E6] transition-colors">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isSolid}
@@ -718,7 +718,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                       className="w-4 h-4 rounded-sm border border-[#B7B7B7] bg-white checked:bg-[#F4008A] checked:border-[#F4008A] cursor-pointer appearance-none relative transition-all
                         before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-white before:text-[10px] before:font-bold before:opacity-0 checked:before:opacity-100"
                     />
-                    <span className="text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8]">
+                    <span className="text-[12px] font-medium text-[#1F1F1F] tracking-[-0.24px] leading-[1.8]">
                       Solid
                     </span>
                   </label>

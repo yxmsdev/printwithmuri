@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -7,8 +8,16 @@ import { createClient } from '@/lib/supabase/client';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, userType?: 'business' | 'creator') => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    userType?: 'business' | 'creator',
+    profession?: string,
+    industry?: string
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
@@ -40,16 +49,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const signUp = async (email: string, password: string, fullName: string, userType: 'business' | 'creator' = 'creator') => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    userType: 'business' | 'creator' = 'creator',
+    profession?: string,
+    industry?: string
+  ) => {
     try {
+      const metadata: Record<string, string> = {
+        full_name: fullName,
+        user_type: userType,
+      };
+
+      // Add profession for creators if provided
+      if (userType === 'creator' && profession) {
+        metadata.profession = profession;
+      }
+
+      // Add industry for businesses if provided
+      if (userType === 'business' && industry) {
+        metadata.industry = industry;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-            user_type: userType,
-          },
+          data: metadata,
         },
       });
 
@@ -65,6 +93,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+      });
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      // Use NEXT_PUBLIC_URL if available (for consistent redirects), otherwise fallback to window.location.origin
+      const baseUrl = process.env.NEXT_PUBLIC_URL || window.location.origin;
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${baseUrl}/auth/callback`,
+        },
       });
 
       if (error) throw error;
@@ -109,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     updatePassword,
