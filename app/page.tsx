@@ -24,7 +24,7 @@ export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sidebarRef = useRef<ConfiguratorSidebarRef>(null);
-  
+
   const [selectedFile, setSelectedFile] = useState<{ url: string; name: string; file: File } | null>(null);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [initialConfig, setInitialConfig] = useState<Partial<ConfigState> | undefined>(undefined);
@@ -77,6 +77,7 @@ export default function Home() {
         setSelectedFile({
           url: '', // No actual URL - model won't load from draft
           name: draft.modelName,
+          file: new File([], draft.modelName), // Dummy file for type satisfaction
         });
 
         // Clear the URL parameter
@@ -146,7 +147,7 @@ export default function Home() {
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F1F1F] text-white px-6 py-3 rounded-[2px] shadow-lg animate-fade-in">
           <div className="flex items-center gap-2">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-green-400">
-              <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span className="text-[14px] font-medium">Draft saved!</span>
           </div>
@@ -160,7 +161,7 @@ export default function Home() {
             <ModelViewer
               fileUrl=""
               fileName=""
-              onModelLoaded={() => {}}
+              onModelLoaded={() => { }}
             />
           </div>
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">

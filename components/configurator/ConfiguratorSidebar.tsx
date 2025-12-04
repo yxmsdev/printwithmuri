@@ -701,7 +701,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                   <label className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
                     Infill Density
                   </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer group">
+                  <label className="flex items-center gap-2 cursor-pointer group bg-[#EFEFEF] px-[8px] py-[8px] rounded-[2px] hover:bg-[#E6E6E6] transition-colors">
                     <input
                       type="checkbox"
                       checked={isSolid}
@@ -715,10 +715,10 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                         }
                         handleSettingsChange();
                       }}
-                      className="w-3 h-3 rounded-sm border border-[#B7B7B7] checked:bg-[#F4008A] checked:border-[#F4008A] cursor-pointer appearance-none relative
-                        before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-white before:text-[8px] before:opacity-0 checked:before:opacity-100"
+                      className="w-4 h-4 rounded-sm border border-[#B7B7B7] bg-white checked:bg-[#F4008A] checked:border-[#F4008A] cursor-pointer appearance-none relative transition-all
+                        before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-white before:text-[10px] before:font-bold before:opacity-0 checked:before:opacity-100"
                     />
-                    <span className="text-[10px] font-medium text-[#8D8D8D] group-hover:text-[#1F1F1F] transition-colors">
+                    <span className="text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8]">
                       Solid
                     </span>
                   </label>
@@ -958,12 +958,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
               </span>
             </div>
             <div className="flex items-center justify-between py-1">
-              <div className="flex items-center gap-1">
-                <span className="text-[14px] font-semibold text-[#1F1F1F] capitalize tracking-[0.28px]">Cost</span>
-                {priceBreakdown?.source === 'server-sliced' && (
-                  <span className="text-[9px] text-green-600 font-medium">✓ SLICED</span>
-                )}
-              </div>
+              <span className="text-[14px] font-semibold text-[#1F1F1F] capitalize tracking-[0.28px]">Cost</span>
               <span className="text-[14px] font-semibold text-[#1F1F1F] uppercase">
                 ₦{totalPrice.toLocaleString()}
               </span>
@@ -976,7 +971,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           <button
             onClick={hasUnsavedSettings ? () => handleSliceModel() : handleAddToBag}
             disabled={isSlicing || isUploading}
-            className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
             style={{
               background: addedToBag
                 ? 'linear-gradient(to right, #22C55E 0%, #16A34A 100%)'
@@ -993,7 +988,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
 
           <button
             onClick={onSaveAsDraft}
-            className="text-[10px] font-medium text-[#1F1F1F] uppercase tracking-[0.6px] underline hover:text-[#F4008A] transition-colors"
+            className="text-[10px] font-medium text-[#1F1F1F] uppercase tracking-[0.6px] underline hover:text-[#F4008A] transition-colors btn-bounce"
           >
             Save as Draft
           </button>

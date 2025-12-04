@@ -11,33 +11,33 @@ export default function OrdersPage() {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
-    });
+    }).toUpperCase();
   };
 
   // Empty state
   if (orders.length === 0) {
     return (
-      <div className="bg-[#EDEDED]">
-        <div className="container mx-auto px-6 py-14 pb-20 max-w-[1128px]">
+      <div className="bg-white min-h-[calc(100vh-56px)]">
+        <div className="mx-auto px-[115px] pt-[64px] pb-0 max-w-[1440px]">
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex flex-col gap-3">
-              <h1 className="text-[42px] font-semibold text-black leading-none">My Orders</h1>
+              <h1 className="text-[48px] font-semibold text-black leading-none">My Orders</h1>
               <p className="text-[16px] font-semibold text-[#8D8D8D]">0 orders</p>
             </div>
             <Link
               href="/"
-              className="rounded-[2px] px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
               style={{
-                background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
+                background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
               }}
             >
-              + New Order
+              + New order
             </Link>
           </div>
 
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
+            <div className="w-24 h-24 bg-[#F5F5F5] rounded-full flex items-center justify-center mb-6 shadow-sm">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
@@ -50,12 +50,12 @@ export default function OrdersPage() {
             </p>
             <Link
               href="/"
-              className="rounded-[2px] px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
               style={{
-                background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
+                background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
               }}
             >
-              Start Shopping
+              Start shopping
             </Link>
           </div>
         </div>
@@ -64,41 +64,41 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="bg-[#EDEDED]">
-      <div className="container mx-auto px-6 py-14 pb-20 max-w-[1128px]">
+    <div className="bg-white min-h-[calc(100vh-56px)]">
+      <div className="mx-auto px-[115px] pt-[64px] pb-24 max-w-[1440px]">
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex flex-col gap-3">
-            <h1 className="text-[42px] font-semibold text-black leading-none">My Orders</h1>
-            <p className="text-[16px] font-semibold text-[#8D8D8D]">
+            <h1 className="text-[48px] font-semibold text-black leading-none">My Orders</h1>
+            <p className="text-[16px] font-normal text-[#8D8D8D]">
               {orders.length} {orders.length === 1 ? 'order' : 'orders'}
             </p>
           </div>
           <Link
             href="/"
-            className="rounded-[2px] px-6 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+            className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
             style={{
-              background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
+              background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
             }}
           >
-            + New Order
+            + New order
           </Link>
         </div>
 
         {/* Table */}
-        <div className="flex flex-col gap-1">
+        <div className="bg-[#b7b7b7] flex flex-col gap-[2px]">
           {/* Table Header */}
-          <div className="bg-white px-8 py-2 flex items-center gap-16">
-            <p className="w-[200px] text-[14px] text-black leading-[1.4]">Order ID</p>
-            <p className="w-[80px] text-[14px] text-black text-center leading-[1.4]">Items</p>
-            <p className="w-[100px] text-[14px] text-black text-center leading-[1.4]">Total</p>
-            <p className="w-[140px] text-[14px] text-black text-center leading-[1.4]">Status</p>
-            <p className="w-[120px] text-[14px] text-black text-center leading-[1.4]">Date</p>
-            <p className="w-[120px] text-[14px] text-black text-center leading-[1.4]">Action</p>
+          <div className="bg-white px-0 py-[8px] flex items-center justify-center gap-[64px]">
+            <p className="w-[200px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Order ID</p>
+            <p className="w-[80px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4] text-center">Items</p>
+            <p className="w-[80px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4] text-center">Total</p>
+            <p className="w-[140px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4] text-center">Status</p>
+            <p className="w-[120px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4] text-center">Date</p>
+            <p className="w-[144px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4] text-center">Action</p>
           </div>
 
           {/* Table Rows */}
-          <div className="flex flex-col gap-[2px]">
+          <div className="flex flex-col gap-px">
             {orders.map((order) => {
               const statusInfo = orderStatusConfig[order.status];
               const totalItems = order.items.reduce((sum, item) => sum + item.config.quantity, 0);
@@ -106,11 +106,11 @@ export default function OrdersPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-white px-8 py-2 flex items-center gap-16"
+                  className="bg-white px-[32px] py-[8px] flex items-center justify-center gap-[64px]"
                 >
                   {/* Order ID */}
                   <div className="w-[200px] flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#FAFAFA] rounded-[2px] flex items-center justify-center flex-shrink-0">
+                    <div className="w-[48px] h-[48px] bg-[#FAFAFA] rounded-[2px] flex items-center justify-center flex-shrink-0">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" strokeWidth="1.5">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                         <line x1="3" y1="6" x2="21" y2="6" />
@@ -123,19 +123,19 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Items */}
-                  <p className="w-[80px] text-[14px] text-black text-center leading-[1.4]">
+                  <p className="w-[80px] text-[16px] text-black leading-[1.4] text-center">
                     {totalItems}
                   </p>
 
                   {/* Total */}
-                  <p className="w-[100px] text-[14px] text-[#1F1F1F] text-center uppercase tracking-[0.28px]">
+                  <p className="w-[80px] text-[14px] text-[#1F1F1F] uppercase tracking-[0.28px] leading-[12px] text-center">
                     ₦{order.total.toLocaleString()}
                   </p>
 
                   {/* Status */}
                   <div className="w-[140px] flex justify-center">
                     <span
-                      className="px-3 py-1 text-[11px] font-medium rounded-full"
+                      className="px-3 py-1 text-[11px] font-medium rounded-[2px] text-center inline-block w-[140px]"
                       style={{
                         color: statusInfo.color,
                         backgroundColor: statusInfo.bgColor,
@@ -146,15 +146,21 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Date */}
-                  <p className="w-[120px] text-[14px] text-[#1F1F1F] text-center uppercase tracking-[0.28px]">
+                  <p className="w-[120px] text-[14px] text-[#1F1F1F] tracking-[0.28px] leading-[12px] text-center">
                     {formatDate(order.createdAt)}
                   </p>
 
                   {/* Action */}
-                  <div className="w-[120px] flex items-center justify-center">
+                  <div className="w-[144px] flex items-center justify-center">
                     <Link
                       href={`/orders/${order.id}`}
-                      className="rounded-[2px] px-6 py-3 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] border border-[#464750] hover:bg-[#1F1F1F] hover:text-white transition-all"
+                      className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] border border-[#464750] transition-all hover:text-white hover:border-transparent btn-bounce"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(180deg, #464750 0%, #000000 100%)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '';
+                      }}
                     >
                       View
                     </Link>

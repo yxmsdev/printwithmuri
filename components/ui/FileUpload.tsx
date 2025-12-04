@@ -33,45 +33,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setUploadProgress(0);
       setError(null);
 
-      // Development mode: Use mock data instead of actual slicing
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔧 Development mode: Using mock slice data');
 
-        // Simulate upload progress
-        setUploadedBytes(0);
-        setTotalBytes(file.size);
-
-        for (let i = 0; i <= 100; i += 10) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          setUploadProgress(i);
-          setUploadedBytes((file.size * i) / 100);
-          console.log(`📤 Mock upload progress: ${i}%`);
-        }
-
-        // Mock slice results
-        const mockData: SlicerQuoteResponse = {
-          success: true,
-          quote: {
-            quote_id: `mock-quote-${Date.now()}`,
-            gcode_file: `mock-${file.name}.gcode`,
-            estimatedWeight: 25.5,
-            printTime: 2.5,
-            machineCost: 5000,
-            materialCost: 3825,
-            setupFee: 500,
-            itemTotal: 9325,
-            currency: 'NGN',
-            slicingDuration: 1000,
-            layerCount: 200,
-          }
-        };
-
-        console.log('✅ Mock slice complete:', mockData);
-        setSliceResults(mockData);
-        setUploadComplete(true);
-        setIsUploading(false);
-        return;
-      }
 
       // Production mode: Two-phase upload and slicing
       try {
@@ -135,11 +97,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
         const extractedFileId = uploadResponse.fileId;
         console.log('🔪 Phase 2: Slicing with fileId:', extractedFileId);
         console.log('📦 Full upload response:', JSON.stringify(uploadResponse));
-        
+
         if (!extractedFileId) {
           throw new Error('Upload succeeded but no fileId was returned');
         }
-        
+
         setUploadProgress(50);
 
         const sliceFormData = new FormData();
@@ -232,8 +194,24 @@ const FileUpload: React.FC<FileUploadProps> = ({
   });
 
   const handleContinue = () => {
+    console.log('🔘 Continue button clicked');
+    console.log('📋 State check:', {
+      hasSelectedFile: !!selectedFile,
+      hasSliceResults: !!sliceResults,
+      hasCurrentFileId: !!currentFileId,
+      hasOnFileSelect: !!onFileSelect,
+    });
+
     if (selectedFile && sliceResults && currentFileId && onFileSelect) {
+      console.log('✅ All conditions met, calling onFileSelect');
       onFileSelect(selectedFile, sliceResults, currentFileId);
+    } else {
+      console.warn('⚠️ Continue button clicked but missing required data:', {
+        selectedFile: !!selectedFile,
+        sliceResults: !!sliceResults,
+        currentFileId: currentFileId,
+        onFileSelect: !!onFileSelect,
+      });
     }
   };
 
@@ -256,9 +234,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   return (
-    <div className="bg-white p-8 w-[633px] shadow-lg flex flex-col gap-8">
+    <div className="bg-white p-8 w-[633px] shadow-lg flex flex-col gap-8 rounded-[2px]">
       <h2 className="text-[20px] font-medium text-black tracking-[-0.4px] leading-none">
-        Upload your 3d Model files
+        Upload your 3d Model file
       </h2>
 
       {/* Upload Box - Always Visible */}
@@ -312,15 +290,28 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {selectedFile && (
             <div className="flex items-start gap-3">
               {/* File Icon */}
-              <div className="flex-shrink-0 w-[45px] h-[56px] bg-[#E6E6E6] rounded-[2px] flex flex-col items-center justify-center">
-                {/* 3D File Icon SVG */}
-                <svg width="20" height="24" viewBox="0 0 20 24" fill="none" className="mb-1">
-                  <rect x="2" y="3" width="16" height="18" rx="1" stroke="#7A7A7A" strokeWidth="1.5" fill="none"/>
-                  <path d="M6 8 L14 8 M6 12 L14 12 M6 16 L10 16" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <p className="text-[10px] font-medium text-[#7A7A7A] leading-none">
-                  {selectedFile.name.split('.').pop()?.toUpperCase()}
-                </p>
+              <div className="flex-shrink-0 w-[45px] h-[56px] flex flex-col items-center justify-center">
+                {(() => {
+                  const extension = selectedFile.name.split('.').pop()?.toLowerCase();
+                  const iconMap: Record<string, string> = {
+                    'stl': '/images/stl.svg',
+                    'obj': '/images/obj.svg',
+                    'fbx': '/images/fbx.svg',
+                    '3mf': '/images/mf.svg',
+                    'gltf': '/images/3d.svg',
+                  };
+                  const iconSrc = iconMap[extension || ''] || '/images/3d.svg';
+
+                  return (
+                    <Image
+                      src={iconSrc}
+                      alt={`${extension?.toUpperCase()} file`}
+                      width={45}
+                      height={56}
+                      className="object-contain"
+                    />
+                  );
+                })()}
               </div>
 
               {/* Progress Info */}
@@ -336,7 +327,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       aria-label="Cancel upload"
                     >
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </button>
                   )}
@@ -372,7 +363,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 )}
 
                 {uploadComplete && (
-                  <p className="text-[12px] text-green-600 font-medium">✓ Ready to continue</p>
+                  <p className="text-[12px] text-green-600 font-medium">Ready to continue</p>
                 )}
               </div>
             </div>
@@ -384,7 +375,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           <div className="flex items-center justify-between">
             <button
               onClick={handleChangeModel}
-              className="text-[12px] font-medium text-[#1F1F1F] uppercase tracking-[0.24px] underline decoration-solid hover:text-[#F4008A] transition-colors"
+              className="text-[12px] font-medium text-[#1F1F1F] uppercase tracking-[0.24px] underline decoration-solid hover:text-[#F4008A] transition-colors btn-bounce"
             >
               Change model
             </button>
@@ -394,7 +385,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               disabled={!uploadComplete}
               className={`
                 px-6 py-2 rounded-[2px] text-[14px] font-medium text-white uppercase tracking-[0.28px]
-                transition-all duration-200
+                transition-all duration-200 btn-bounce
                 ${uploadComplete
                   ? 'bg-gradient-to-b from-[#1F1F1F] to-[#3a3a3a] hover:opacity-90 cursor-pointer'
                   : 'bg-gradient-to-b from-[#464750] to-[#000000] cursor-not-allowed opacity-60'

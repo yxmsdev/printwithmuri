@@ -17,7 +17,7 @@ export interface PrintConfig {
   quality: 'draft' | 'standard' | 'high' | 'ultra';
   material: 'PLA' | 'PETG' | 'ABS' | 'Resin';
   color: string;                         // hex
-  infillType: 'hexagonal' | 'grid' | 'lines' | 'triangles' | 'cubic';
+  infillType: 'cubic' | 'gyroid' | 'honeycomb' | 'rectilinear' | 'grid' | 'line' | 'triangles' | 'concentric';
   infillDensity: number;                 // 5-100 (percentage)
   designGuideImages: File[];
 }

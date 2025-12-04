@@ -1,66 +1,127 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNewsletterStore } from '@/stores/useNewsletterStore';
+import NewsletterSection from './NewsletterSection';
+
 const Footer = () => {
+  const { user } = useAuth();
+  const hasSubmittedNewsletter = useNewsletterStore((state) => state.hasSubmittedNewsletter);
+
+  // Show newsletter section only if:
+  // 1. User is NOT logged in
+  // 2. User has NOT already submitted the newsletter form
+  const showNewsletter = !user && !hasSubmittedNewsletter;
+
   return (
-    <footer className="bg-white border-t border-[#E6E6E6] mt-auto">
-      <div className="container mx-auto px-6 py-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Copyright */}
-          <p className="text-[12px] text-[#8D8D8D]">
-            © 2025 Muri Press. All rights reserved.
-          </p>
+    <footer className="bg-white mt-auto">
+      {/* Colorful Top Border - Repeating Pattern - Always show at top */}
+      <div className="relative h-[2px] overflow-hidden">
+        <div className="absolute inset-0 flex">
+          {/* Repeat the pattern multiple times to fill width */}
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="flex flex-none">
+              <div className="w-[130.781px] h-[2px] bg-[#FFD913]" />
+              <div className="w-[130.421px] h-[2px] bg-[#CF2886]" />
+              <div className="w-[130.781px] h-[2px] bg-[#41D4EA]" />
+            </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Social Media Links */}
-          <div className="flex items-center gap-4">
-            {/* Instagram */}
-            <a 
-              href="https://instagram.com/muripress" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-[#8D8D8D] hover:text-[#F4008A] transition-colors"
-              aria-label="Instagram"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-            </a>
+      {/* Newsletter Section - Conditionally rendered */}
+      {showNewsletter && <NewsletterSection />}
 
-            {/* Twitter/X */}
-            <a 
-              href="https://twitter.com/muripress" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-[#8D8D8D] hover:text-[#F4008A] transition-colors"
-              aria-label="Twitter"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </a>
+      {/* Footer Content */}
+      <div className="bg-[#F6F6F6] h-[96px]">
+        <div className="max-w-[1461px] mx-auto h-full">
+          <div className="h-full flex items-center justify-between px-[52px]">
+            {/* Left Side - Logo and Social Icons as one unit */}
+            <div className="flex items-center gap-[15px]">
+              {/* Logo - Black version, smaller size */}
+              <Link href="/" className="flex items-center text-black">
+                <svg width="60" height="25" viewBox="0 0 82 33" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                  <path d="M76.0003 16.0938H81.0782V32.4906H76.0003V16.0938Z" fill="currentColor"/>
+                  <path d="M60.3283 32.4906V16.0938H68.7728C70.3386 16.0938 71.5354 16.228 72.3631 16.4964C73.1907 16.7649 73.8581 17.2644 74.3651 17.9952C74.8722 18.7185 75.1257 19.6021 75.1257 20.646C75.1257 21.5557 74.9318 22.3423 74.5441 23.0059C74.1563 23.6621 73.6232 24.1952 72.9447 24.6054C72.5122 24.8663 71.9194 25.0826 71.1663 25.2541C71.7703 25.4554 72.2102 25.6567 72.4861 25.858C72.6725 25.9923 72.9409 26.2793 73.2914 26.7193C73.6493 27.1592 73.8879 27.4985 74.0072 27.7371L76.4567 32.4906H70.7301L68.0234 27.4798C67.6804 26.8311 67.3747 26.4098 67.1062 26.2159C66.7409 25.9624 66.327 25.8357 65.8647 25.8357H65.4173V32.4906H60.3283ZM65.4173 22.7375H67.5536C67.7848 22.7375 68.2322 22.6629 68.8958 22.5138C69.2313 22.4467 69.5035 22.2752 69.7123 21.9993C69.9285 21.7234 70.0366 21.4065 70.0366 21.0486C70.0366 20.5192 69.8689 20.1128 69.5333 19.8295C69.1978 19.5461 68.5677 19.4045 67.6431 19.4045H65.4173V22.7375Z" fill="currentColor"/>
+                  <path d="M54.1409 16.0938H59.1964V25.8692C59.1964 26.8386 59.0435 27.7557 58.7378 28.6207C58.4396 29.4782 57.9661 30.2313 57.3174 30.88C56.6761 31.5212 56.0013 31.9724 55.2929 32.2333C54.3087 32.5987 53.1268 32.7814 51.7474 32.7814C50.9495 32.7814 50.0771 32.7255 49.1302 32.6136C48.1906 32.5018 47.404 32.2818 46.7702 31.9537C46.1364 31.6182 45.5548 31.1447 45.0254 30.5333C44.5034 29.9218 44.1455 29.2917 43.9516 28.643C43.6385 27.5991 43.4819 26.6745 43.4819 25.8692V16.0938H48.5374V26.1041C48.5374 26.9989 48.7834 27.6998 49.2756 28.2068C49.7751 28.7064 50.4649 28.9562 51.3447 28.9562C52.2171 28.9562 52.8994 28.7101 53.3915 28.218C53.8911 27.7184 54.1409 27.0138 54.1409 26.1041V16.0938Z" fill="currentColor"/>
+                  <path d="M24.0741 16.0938H30.7402L33.3127 26.0705L35.874 16.0938H42.5177V32.4906H38.3794V19.9861L35.1694 32.4906H31.4225L28.2237 19.9861V32.4906H24.0741V16.0938Z" fill="currentColor"/>
+                  <path d="M52.8524 0H68.2538V4.04887H63.0865V16.3968H58.0198V4.04887H52.8524V0Z" fill="currentColor"/>
+                  <path d="M37.2475 0H41.9786L48.1526 9.07081V0H52.9285V16.3968H48.1526L42.0122 7.3931V16.3968H37.2475V0Z" fill="currentColor"/>
+                  <path d="M30.7805 0H35.8584V16.3968H30.7805V0Z" fill="currentColor"/>
+                  <path d="M15.1085 16.3968V0H23.5529C25.1188 0 26.3156 0.134217 27.1432 0.40265C27.9709 0.671083 28.6383 1.17067 29.1453 1.9014C29.6523 2.62468 29.9059 3.50827 29.9059 4.55218C29.9059 5.46187 29.712 6.24853 29.3243 6.91216C28.9365 7.56833 28.4034 8.10147 27.7248 8.51157C27.2924 8.77255 26.6996 8.98879 25.9465 9.16029C26.5504 9.36161 26.9904 9.56294 27.2663 9.76426C27.4527 9.89848 27.7211 10.1856 28.0716 10.6255C28.4295 11.0654 28.6681 11.4047 28.7874 11.6433L31.2368 16.3968H25.5103L22.8036 11.386C22.4606 10.7373 22.1548 10.316 21.8864 10.1222C21.521 9.86865 21.1072 9.74189 20.6449 9.74189H20.1975V16.3968H15.1085ZM20.1975 6.64372H22.3338C22.565 6.64372 23.0123 6.56916 23.676 6.42003C24.0115 6.35292 24.2837 6.18142 24.4925 5.90553C24.7087 5.62964 24.8168 5.31274 24.8168 4.95483C24.8168 4.42542 24.649 4.01904 24.3135 3.7357C23.978 3.45235 23.3479 3.31068 22.4233 3.31068H20.1975V6.64372Z" fill="currentColor"/>
+                  <path d="M0.756231 0H9.17833C11.0126 0 12.3846 0.436204 13.2943 1.30861C14.2115 2.18102 14.67 3.42252 14.67 5.03312C14.67 6.68846 14.1704 7.98216 13.1713 8.91422C12.1796 9.84628 10.6622 10.3123 8.61909 10.3123H5.84528V16.3968H0.756231V0ZM5.84528 6.99045H7.08678C8.06358 6.99045 8.74958 6.82268 9.14477 6.48714C9.53996 6.14414 9.73756 5.70794 9.73756 5.17853C9.73756 4.66403 9.56606 4.22782 9.22306 3.86991C8.88007 3.512 8.23508 3.33305 7.28811 3.33305H5.84528V6.99045Z" fill="currentColor"/>
+                  <path d="M15.1863 25.962V16.398H16.3606V19.8295C16.9086 19.1946 17.6001 18.8771 18.4351 18.8771C18.9484 18.8771 19.3941 18.9793 19.7725 19.1837C20.1509 19.3837 20.4206 19.6621 20.5815 20.0187C20.7468 20.3754 20.8294 20.8929 20.8294 21.5714V25.962H19.6551V21.5714C19.6551 20.9843 19.5268 20.558 19.2702 20.2927C19.0179 20.0231 18.6591 19.8883 18.1938 19.8883C17.8458 19.8883 17.5175 19.9796 17.2087 20.1623C16.9042 20.3406 16.6867 20.5841 16.5563 20.8929C16.4258 21.2017 16.3606 21.628 16.3606 22.1716V25.962H15.1863Z" fill="currentColor"/>
+                  <path d="M14.6996 24.9116L14.8692 25.9489C14.5386 26.0185 14.2429 26.0533 13.9819 26.0533C13.5557 26.0533 13.2252 25.9859 12.9903 25.8511C12.7555 25.7162 12.5902 25.5401 12.4945 25.3226C12.3988 25.1008 12.351 24.6376 12.351 23.9331V19.947H11.4898V19.0336H12.351V17.3179L13.5188 16.6133V19.0336H14.6996V19.947H13.5188V23.9983C13.5188 24.3332 13.5383 24.5485 13.5775 24.6442C13.621 24.7398 13.6884 24.8159 13.7797 24.8725C13.8754 24.929 14.0102 24.9573 14.1842 24.9573C14.3147 24.9573 14.4865 24.9421 14.6996 24.9116Z" fill="currentColor"/>
+                  <path d="M9.83538 17.7484V16.398H11.0097V17.7484H9.83538ZM9.83538 25.962V19.0336H11.0097V25.962H9.83538Z" fill="currentColor"/>
+                  <path d="M2.12026 25.962L0 19.0336H1.21344L2.72697 24.5202C2.74437 24.4463 2.86398 23.97 3.08579 23.0915L4.18832 19.0336H5.39524L6.43253 23.0523L6.77829 24.3767L7.17625 23.0393L8.36359 19.0336H9.50527L7.33935 25.962H6.11938L5.01685 21.8128L4.74937 20.632L3.34674 25.962H2.12026Z" fill="currentColor"/>
+                </svg>
+              </Link>
 
-            {/* LinkedIn */}
-            <a 
-              href="https://linkedin.com/company/muripress" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-[#8D8D8D] hover:text-[#F4008A] transition-colors"
-              aria-label="LinkedIn"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-              </svg>
-            </a>
+              {/* Social Media Icons */}
+              <div className="flex items-center gap-[15px]">
+                {/* TikTok */}
+                <Link
+                  href="https://tiktok.com/@muripress"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#1F1F1F] hover:text-[#F4008A] transition-colors"
+                  aria-label="TikTok"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M16.59 5.69a4.83 4.83 0 0 1-3.77-4.25V1h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.3 0 .59.04.88.13V8.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 2 19.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4c-.35 0-.69-.04-1-.1z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </Link>
 
-            {/* TikTok */}
-            <a 
-              href="https://tiktok.com/@muripress" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-[#8D8D8D] hover:text-[#F4008A] transition-colors"
-              aria-label="TikTok"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-              </svg>
-            </a>
+                {/* Instagram */}
+                <Link
+                  href="https://instagram.com/muripress"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#1F1F1F] hover:text-[#F4008A] transition-colors"
+                  aria-label="Instagram"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 1.8c2.67 0 2.987.01 4.042.059 2.71.123 3.976 1.409 4.099 4.099.048 1.054.059 1.371.059 4.042 0 2.67-.01 2.987-.059 4.042-.124 2.687-1.387 3.976-4.1 4.099-1.054.048-1.37.059-4.041.059-2.67 0-2.987-.01-4.042-.059-2.717-.124-3.976-1.416-4.1-4.1-.048-1.054-.058-1.37-.058-4.041 0-2.67.01-2.986.059-4.042.123-2.687 1.387-3.975 4.1-4.099 1.054-.048 1.37-.058 4.041-.058zM10 0C7.284 0 6.944.012 5.877.06 2.246.227.228 2.242.06 5.877.012 6.944 0 7.284 0 10s.012 3.057.06 4.123c.167 3.632 2.182 5.65 5.817 5.817C6.944 19.988 7.284 20 10 20s3.057-.012 4.123-.06c3.629-.167 5.652-2.182 5.816-5.817.05-1.066.061-1.406.061-4.123s-.012-3.056-.06-4.122C19.773 2.242 17.755.228 14.123.06 13.056.012 12.716 0 10 0zm0 4.865a5.135 5.135 0 1 0 0 10.27 5.135 5.135 0 0 0 0-10.27zM10 13.333A3.333 3.333 0 1 1 10 6.667a3.333 3.333 0 0 1 0 6.666zm5.338-9.805a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z" />
+                  </svg>
+                </Link>
+
+                {/* X (Twitter) */}
+                <Link
+                  href="https://twitter.com/muripress"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#1F1F1F] hover:text-[#F4008A] transition-colors"
+                  aria-label="X (Twitter)"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M15.203 1.875h2.757l-6.023 6.883 7.085 9.367h-5.546l-4.345-5.681-4.975 5.681H1.4l6.443-7.363L1.25 1.875h5.688l3.926 5.193 4.34-5.193zm-.968 14.6h1.528L6.32 3.44H4.68l9.555 12.635z" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+
+            {/* Center - Legal Links */}
+            <div className="flex items-center gap-[24px] text-[12px] font-medium text-[#1F1F1F] uppercase tracking-[0.24px]">
+              <Link href="/legal" className="hover:text-[#F4008A] transition-colors">
+                Legal
+              </Link>
+              <Link href="/contact" className="hover:text-[#F4008A] transition-colors">
+                Contact
+              </Link>
+              <Link href="/support" className="hover:text-[#F4008A] transition-colors">
+                Support
+              </Link>
+            </div>
+
+            {/* Right Side - Copyright */}
+            <p className="text-[12px] font-bold text-black uppercase">
+              2025© MURI PRESS
+            </p>
           </div>
         </div>
       </div>

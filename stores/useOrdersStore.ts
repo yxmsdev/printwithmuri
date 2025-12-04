@@ -139,9 +139,9 @@ export function createOrderFromCheckout(
 // Status display helpers
 export const orderStatusConfig: Record<OrderStatus, { label: string; color: string; bgColor: string }> = {
   received: { label: 'Order Received', color: '#1F1F1F', bgColor: '#E6E6E6' },
-  reviewing: { label: 'Reviewing Files', color: '#7C3AED', bgColor: '#EDE9FE' },
+  reviewing: { label: 'Reviewing Files', color: '#EA9000', bgColor: '#FFF0C8' },
   printing: { label: 'Printing', color: '#F4008A', bgColor: '#FDE8F3' },
-  quality_check: { label: 'Quality Check', color: '#F59E0B', bgColor: '#FEF3C7' },
+  quality_check: { label: 'Quality Check', color: '#EA9000', bgColor: '#FFF0C8' },
   ready_for_delivery: { label: 'Ready for Delivery', color: '#3B82F6', bgColor: '#DBEAFE' },
   out_for_delivery: { label: 'Out for Delivery', color: '#8B5CF6', bgColor: '#EDE9FE' },
   delivered: { label: 'Delivered', color: '#22C55E', bgColor: '#DCFCE7' },

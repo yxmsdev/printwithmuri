@@ -57,7 +57,7 @@ export default function BagPage() {
   return (
     <div className="container mx-auto px-6 py-12 max-w-[1440px]">
       <h1 className="text-[32px] font-medium text-[#1F1F1F] mb-8">Your Bag</h1>
-      
+
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Items List */}
         <div className="flex-1">
@@ -69,8 +69,8 @@ export default function BagPage() {
 
           <div className="space-y-6">
             {items.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="flex gap-6 pb-6 border-b border-[#E6E6E6]"
               >
                 {/* Model Preview Placeholder */}
@@ -98,13 +98,13 @@ export default function BagPage() {
 
                   {/* Config Details */}
                   <div className="space-y-1 mb-4">
-                    <p className="text-[13px] text-[#7A7A7A]">
+                    <p className="text-[14px] text-[#7A7A7A]">
                       <span className="text-[#8D8D8D]">Material:</span> {item.config.material}
                     </p>
-                    <p className="text-[13px] text-[#7A7A7A]">
+                    <p className="text-[14px] text-[#7A7A7A]">
                       <span className="text-[#8D8D8D]">Quality:</span> {item.config.quality}
                     </p>
-                    <p className="text-[13px] text-[#7A7A7A] flex items-center gap-2">
+                    <p className="text-[14px] text-[#7A7A7A] flex items-center gap-2">
                       <span className="text-[#8D8D8D]">Color:</span>
                       <span
                         className="w-3 h-3 rounded-full inline-block border border-[#E6E6E6]"
@@ -116,7 +116,7 @@ export default function BagPage() {
                   {/* Quantity & Price */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <span className="text-[13px] text-[#8D8D8D]">Qty:</span>
+                      <span className="text-[14px] text-[#8D8D8D]">Qty:</span>
                       <div className="flex items-center gap-3 border border-[#E6E6E6] rounded-[2px] px-3 py-1">
                         <button
                           onClick={() => handleQuantityChange(item.id, item.config.quantity - 1)}

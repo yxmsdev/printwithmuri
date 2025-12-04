@@ -30,7 +30,7 @@ export const useBagStore = create<BagStore>()(
 
       addItem: (item) => {
         const currentItems = get().items;
-        
+
         // Check if item with same model name and config already exists (case-insensitive)
         const existingItemIndex = currentItems.findIndex(
           (existing) =>
@@ -44,19 +44,19 @@ export const useBagStore = create<BagStore>()(
           // Update quantity of existing item
           const existingItem = currentItems[existingItemIndex];
           const newQuantity = existingItem.config.quantity + item.config.quantity;
-          
+
           set({
             items: currentItems.map((i, index) =>
               index === existingItemIndex
                 ? {
-                    ...i,
-                    config: { ...i.config, quantity: newQuantity },
-                    price: {
-                      ...i.price,
-                      quantity: newQuantity,
-                      subtotal: i.price.itemTotal * newQuantity,
-                    },
-                  }
+                  ...i,
+                  config: { ...i.config, quantity: newQuantity },
+                  price: {
+                    ...i.price,
+                    quantity: newQuantity,
+                    subtotal: i.price.itemTotal * newQuantity,
+                  },
+                }
                 : i
             ),
           });
@@ -90,14 +90,14 @@ export const useBagStore = create<BagStore>()(
             items: state.items.map((item) =>
               item.id === id
                 ? {
-                    ...item,
-                    config: { ...item.config, quantity },
-                    price: {
-                      ...item.price,
-                      quantity,
-                      subtotal: item.price.itemTotal * quantity,
-                    },
-                  }
+                  ...item,
+                  config: { ...item.config, quantity },
+                  price: {
+                    ...item.price,
+                    quantity,
+                    subtotal: item.price.itemTotal * quantity,
+                  },
+                }
                 : item
             ),
           }));
@@ -142,7 +142,7 @@ export function createBagItem(
     quality: config.quality.toLowerCase() as 'draft' | 'standard' | 'high',
     material: config.material as 'PLA' | 'PETG' | 'ABS' | 'Resin',
     color: config.color,
-    infillType: (config.infillType || 'hexagonal') as 'hexagonal' | 'grid' | 'triangles' | 'gyroid',
+    infillType: (config.infillType || 'honeycomb') as 'cubic' | 'gyroid' | 'honeycomb' | 'rectilinear' | 'grid' | 'line' | 'triangles' | 'concentric',
     infillDensity: config.infillDensity || 20,
     designGuideImages: [],
   };

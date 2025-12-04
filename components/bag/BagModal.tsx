@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useBagStore } from '@/stores/useBagStore';
 
@@ -12,6 +13,19 @@ export default function BagModal({ onClose }: BagModalProps) {
   const items = useBagStore((state) => state.items);
   const removeItem = useBagStore((state) => state.removeItem);
   const updateQuantity = useBagStore((state) => state.updateQuantity);
+
+  // Get material icon based on material type
+  const getMaterialIcon = (material: string) => {
+    const materialLower = material.toLowerCase();
+    const iconMap: Record<string, string> = {
+      'pla': '/images/pla-icon.svg',
+      'abs': '/images/abs-icon.svg',
+      'petg': '/images/petg-icon.svg',
+      'tpu': '/images/tpu-icon.svg',
+      'resin': '/images/resin-icon.svg',
+    };
+    return iconMap[materialLower] || '/images/pla-icon.svg';
+  };
 
   // Calculate totals
   const subtotal = items.reduce((total, item) => total + item.price.subtotal, 0);
@@ -38,10 +52,10 @@ export default function BagModal({ onClose }: BagModalProps) {
           </svg>
         </div>
         <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-2">Your bag is empty</h2>
-        <p className="text-[13px] text-[#7A7A7A] mb-6">Upload a 3D model to get started</p>
+        <p className="text-[14px] text-[#7A7A7A] mb-6">Upload a 3D model to get started</p>
         <button
           onClick={onClose}
-          className="px-6 py-2 rounded-[2px] text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+          className="px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
           }}
@@ -56,25 +70,21 @@ export default function BagModal({ onClose }: BagModalProps) {
     <div className="flex flex-col max-h-[70vh]">
       {/* Items List */}
       <div className="flex-1 overflow-y-auto pr-2">
-        <div className="border-b border-[#E6E6E6] pb-3 mb-4">
-          <span className="text-[13px] text-[#7A7A7A]">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
-          </span>
-        </div>
-
         <div className="space-y-4">
           {items.map((item) => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               className="flex gap-4 pb-4 border-b border-[#E6E6E6]"
             >
               {/* Model Preview Placeholder */}
-              <div className="w-[80px] h-[80px] bg-[#EDEDED] rounded-[2px] flex items-center justify-center flex-shrink-0">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
-                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
+              <div className="w-[80px] h-[80px] flex items-center justify-center flex-shrink-0">
+                <Image
+                  src={getMaterialIcon(item.config.material)}
+                  alt={item.config.material}
+                  width={56}
+                  height={56}
+                  className="object-contain"
+                />
               </div>
 
               {/* Item Details */}
@@ -85,16 +95,14 @@ export default function BagModal({ onClose }: BagModalProps) {
                   </h3>
                   <button
                     onClick={() => handleRemove(item.id)}
-                    className="text-[11px] text-[#7A7A7A] hover:text-[#F4008A] transition-colors flex-shrink-0"
+                    className="text-[11px] text-[#7A7A7A] hover:text-[#F4008A] transition-colors flex-shrink-0 btn-bounce"
                   >
                     Remove
                   </button>
                 </div>
 
                 {/* Config Details */}
-                <div className="flex gap-3 text-[11px] text-[#8D8D8D] mb-3">
-                  <span>{item.config.material}</span>
-                  <span>•</span>
+                <div className="flex gap-3 items-center text-[11px] text-[#8D8D8D] mb-3">
                   <span className="capitalize">{item.config.quality}</span>
                   <span>•</span>
                   <span
@@ -109,7 +117,7 @@ export default function BagModal({ onClose }: BagModalProps) {
                     <div className="flex items-center gap-2 border border-[#E6E6E6] rounded-[2px] px-2 py-0.5">
                       <button
                         onClick={() => handleQuantityChange(item.id, item.config.quantity - 1)}
-                        className="text-[#7A7A7A] hover:text-[#1F1F1F] transition-colors"
+                        className="text-[#7A7A7A] hover:text-[#1F1F1F] transition-colors btn-bounce"
                       >
                         <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
                           <rect y="5" width="12" height="2" />
@@ -131,7 +139,7 @@ export default function BagModal({ onClose }: BagModalProps) {
                       />
                       <button
                         onClick={() => handleQuantityChange(item.id, item.config.quantity + 1)}
-                        className="text-[#7A7A7A] hover:text-[#1F1F1F] transition-colors"
+                        className="text-[#7A7A7A] hover:text-[#1F1F1F] transition-colors btn-bounce"
                       >
                         <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
                           <rect y="5" width="12" height="2" />
@@ -154,11 +162,11 @@ export default function BagModal({ onClose }: BagModalProps) {
       {/* Order Summary */}
       <div className="border-t border-[#E6E6E6] pt-4 mt-4">
         <div className="space-y-2 mb-4">
-          <div className="flex justify-between text-[13px]">
+          <div className="flex justify-between text-[14px]">
             <span className="text-[#7A7A7A]">Subtotal</span>
             <span className="text-[#1F1F1F]">₦{subtotal.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between text-[13px]">
+          <div className="flex justify-between text-[14px]">
             <span className="text-[#7A7A7A]">Delivery</span>
             <span className="text-[#1F1F1F]">₦{deliveryFee.toLocaleString()}</span>
           </div>
@@ -173,7 +181,7 @@ export default function BagModal({ onClose }: BagModalProps) {
             onClose();
             router.push('/checkout');
           }}
-          className="w-full py-2 rounded-[2px] text-[13px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3"
+          className="w-full py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3 btn-bounce"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
           }}
@@ -183,7 +191,7 @@ export default function BagModal({ onClose }: BagModalProps) {
 
         <button
           onClick={onClose}
-          className="w-full text-[12px] text-[#7A7A7A] hover:text-[#F4008A] transition-colors"
+          className="w-full text-[12px] text-[#7A7A7A] hover:text-[#F4008A] transition-colors btn-bounce"
         >
           Continue Shopping
         </button>

@@ -15,23 +15,21 @@ interface ShippingAddress {
   city: string;
   state: string;
   postalCode: string;
+  country: string;
 }
 
-const nigerianStates = [
-  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
-  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT', 'Gombe',
-  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
-  'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
-  'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
-];
+import { nigerianStates, nigerianCities } from '@/lib/nigerian-states';
+
+import { deliveryPrices, defaultDeliveryPrice } from '@/lib/delivery-pricing';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getSubtotal, clearBag } = useBagStore();
   const addOrder = useOrdersStore((state) => state.addOrder);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'flutterwave' | 'bank'>('paystack');
-  
+  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'crypto'>('paystack');
+  const [deliveryMethod, setDeliveryMethod] = useState<'dispatch' | 'pickup'>('dispatch');
+
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     fullName: '',
     email: '',
@@ -40,17 +38,30 @@ export default function CheckoutPage() {
     city: '',
     state: '',
     postalCode: '',
+    country: 'Nigeria',
   });
 
   const [errors, setErrors] = useState<Partial<ShippingAddress>>({});
 
   const subtotal = getSubtotal();
-  const deliveryFee = 2500;
+
+  // Calculate delivery fee
+  const getDeliveryFee = () => {
+    if (deliveryMethod === 'pickup') return 0;
+
+    if (shippingAddress.state) {
+      return deliveryPrices[shippingAddress.state] || defaultDeliveryPrice;
+    }
+
+    return defaultDeliveryPrice;
+  };
+
+  const deliveryFee = getDeliveryFee();
   const total = subtotal + deliveryFee;
 
   const validateForm = (): boolean => {
     const newErrors: Partial<ShippingAddress> = {};
-    
+
     if (!shippingAddress.fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!shippingAddress.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(shippingAddress.email)) newErrors.email = 'Invalid email format';
@@ -61,21 +72,32 @@ export default function CheckoutPage() {
     if (!shippingAddress.address.trim()) newErrors.address = 'Address is required';
     if (!shippingAddress.city.trim()) newErrors.city = 'City is required';
     if (!shippingAddress.state) newErrors.state = 'State is required';
-    
+    if (!shippingAddress.country) newErrors.country = 'Country is required';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (field: keyof ShippingAddress, value: string) => {
-    setShippingAddress(prev => ({ ...prev, [field]: value }));
+    setShippingAddress(prev => {
+      // If state changes, reset city
+      if (field === 'state') {
+        return { ...prev, [field]: value, city: '' };
+      }
+      return { ...prev, [field]: value };
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+    // If state changed, also clear city error
+    if (field === 'state' && errors.city) {
+      setErrors(prev => ({ ...prev, city: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
     if (items.length === 0) {
       alert('Your bag is empty');
@@ -84,37 +106,82 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    // TODO: Integrate with actual payment gateway
-    // For now, simulate payment processing
-    setTimeout(() => {
-      // Create payment reference (simulated)
-      const paymentReference = `PAY-${Date.now().toString(36).toUpperCase()}`;
-      
-      // Create and save the order
-      const orderData = createOrderFromCheckout(
-        items,
-        shippingAddress,
-        subtotal,
-        deliveryFee,
-        paymentReference
-      );
-      
-      const orderId = addOrder(orderData);
-      
-      // Clear bag and redirect to confirmation with order ID
-      clearBag();
-      router.push(`/checkout/confirmation?order=${orderId}`);
-    }, 2000);
+    try {
+      if (paymentMethod === 'crypto') {
+        const response = await fetch('/api/payments/coinbase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: total,
+            currency: 'NGN', // Coinbase Commerce handles currency conversion
+            description: `Order for ${shippingAddress.fullName}`,
+            metadata: {
+              customer_email: shippingAddress.email,
+              customer_name: shippingAddress.fullName,
+            },
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.hosted_url) {
+          // Create order before redirecting (status: pending)
+          const paymentReference = `CRYPTO-${data.id}`;
+          const orderData = createOrderFromCheckout(
+            items,
+            shippingAddress,
+            subtotal,
+            deliveryFee,
+            paymentReference
+          );
+          addOrder(orderData);
+          clearBag();
+
+          // Redirect to Coinbase Commerce
+          window.location.href = data.hosted_url;
+          return;
+        } else {
+          throw new Error(data.error || 'Failed to initialize crypto payment');
+        }
+      }
+
+      // Simulate other payment methods
+      setTimeout(() => {
+        // Create payment reference (simulated)
+        const paymentReference = `PAY-${Date.now().toString(36).toUpperCase()}`;
+
+        // Create and save the order
+        const orderData = createOrderFromCheckout(
+          items,
+          shippingAddress,
+          subtotal,
+          deliveryFee,
+          paymentReference
+        );
+
+        const orderId = addOrder(orderData);
+
+        // Clear bag and redirect to confirmation with order ID
+        clearBag();
+        router.push(`/checkout/confirmation?order=${orderId}`);
+      }, 2000);
+    } catch (error) {
+      console.error('Payment Error:', error);
+      alert('Payment initialization failed. Please try again.');
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[calc(100vh-56px)] flex flex-col items-center justify-center bg-[#EDEDED] p-8">
-        <div className="bg-white p-8 rounded-[2px] shadow-sm text-center max-w-md">
+      <div className="min-h-[calc(100vh-56px)] flex flex-col items-center justify-center bg-white p-8">
+        <div className="bg-white p-8 rounded-[2px] border-[0.5px] border-[#B7B7B7] text-center max-w-md">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 text-[#8D8D8D]">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2"/>
-            <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" />
+            <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <h2 className="text-[20px] font-medium text-[#1F1F1F] mb-2">Your bag is empty</h2>
           <p className="text-[14px] text-[#8D8D8D] mb-6">Add some items to your bag before checking out.</p>
@@ -130,25 +197,93 @@ export default function CheckoutPage() {
     );
   }
 
+  // Get material icon based on material type
+  const getMaterialIcon = (material: string) => {
+    const materialLower = material.toLowerCase();
+    const iconMap: Record<string, string> = {
+      'pla': '/images/pla-icon.svg',
+      'abs': '/images/abs-icon.svg',
+      'petg': '/images/petg-icon.svg',
+      'tpu': '/images/tpu-icon.svg',
+      'resin': '/images/resin-icon.svg',
+    };
+    return iconMap[materialLower] || '/images/pla-icon.svg';
+  };
+
   return (
-    <div className="min-h-[calc(100vh-56px)] bg-[#EDEDED]">
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/" className="text-[12px] text-[#8D8D8D] hover:text-[#1F1F1F] transition-colors">
-            ← Back to configurator
-          </Link>
-          <h1 className="text-[28px] font-medium text-[#1F1F1F] mt-2">Checkout</h1>
-        </div>
+    <div className="min-h-[calc(100vh-56px)] bg-white">
+      <div className="w-full max-w-[1200px] mx-auto px-4 md:px-6 py-8 pb-64">
+        <h1 className="text-[32px] font-semibold text-[#1F1F1F] mb-8">Checkout</h1>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Shipping & Payment */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* Left Column - Forms */}
+            <div className="lg:col-span-2 space-y-8">
+
+              {/* Delivery Method */}
+              <div className="bg-white p-6 rounded-[2px] border-[0.5px] border-[#B7B7B7]">
+                <h2 className="text-[16px] font-medium text-[#1F1F1F] mb-6">Delivery Method</h2>
+                <div className="space-y-3">
+                  {/* Dispatch */}
+                  <label
+                    className={`flex items-start gap-4 p-4 rounded-[2px] cursor-pointer transition-all border ${deliveryMethod === 'dispatch'
+                      ? 'bg-[#EFEFEF] border-transparent'
+                      : 'bg-[#EFEFEF] border-transparent hover:border-[#F4008A]'
+                      }`}
+                    onClick={() => setDeliveryMethod('dispatch')}
+                  >
+                    <div className="mt-1">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {deliveryMethod === 'dispatch' ? (
+                          <>
+                            <rect x="1" y="1" width="22" height="22" rx="2" stroke="#F4008A" strokeWidth="1" fill="none" />
+                            <circle cx="12" cy="12" r="6" fill="#F4008A" className="transition-all duration-200" />
+                          </>
+                        ) : (
+                          <>
+                            <rect x="1" y="1" width="22" height="22" rx="2" stroke="#8D8D8D" strokeWidth="1" fill="none" />
+                            <circle cx="12" cy="12" r="4" fill="#8D8D8D" className="transition-all duration-200" />
+                          </>
+                        )}
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-[14px] font-medium tracking-[-0.28px] leading-[1.8] ${deliveryMethod === 'dispatch' ? 'text-[#1F1F1F]' : 'text-[#8D8D8D]'}`}>Dispatch</p>
+                      <p className="text-[12px] text-[#8D8D8D]">Delivery to your doorstep</p>
+                    </div>
+                    <div className={`text-[14px] font-medium ${deliveryMethod === 'dispatch' ? 'text-[#1F1F1F]' : 'text-[#8D8D8D]'}`}>
+                      ₦{getDeliveryFee().toLocaleString()}
+                    </div>
+                  </label>
+
+                  {/* Pickup */}
+                  <label className="flex items-start gap-4 p-4 rounded-[2px] border border-transparent bg-[#EFEFEF] opacity-60 cursor-not-allowed">
+                    <div className="mt-1">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="1" width="22" height="22" rx="2" stroke="#8D8D8D" strokeWidth="1" fill="none" />
+                        <circle cx="12" cy="12" r="4" fill="#8D8D8D" className="transition-all duration-200" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[14px] font-medium text-[#8D8D8D] tracking-[-0.28px] leading-[1.8]">Pickup</p>
+                        <span className="px-2 py-0.5 bg-pink-100 text-[#F4008A] text-[10px] font-medium rounded-full">
+                          Coming Soon
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-[#8D8D8D]">Pick up from our station</p>
+                    </div>
+                    <div className="text-[14px] font-medium text-[#8D8D8D]">
+                      Free
+                    </div>
+                  </label>
+                </div>
+              </div>
+
               {/* Shipping Address */}
-              <div className="bg-white p-6 rounded-[2px] shadow-sm">
-                <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-6">Shipping Address</h2>
-                
+              <div className="bg-white p-6 rounded-[2px] border-[0.5px] border-[#B7B7B7]">
+                <h2 className="text-[16px] font-medium text-[#1F1F1F] mb-6">Shipping Address</h2>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Full Name */}
                   <div className="md:col-span-2">
@@ -159,8 +294,9 @@ export default function CheckoutPage() {
                       type="text"
                       value={shippingAddress.fullName}
                       onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      className={`w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A] ${errors.fullName ? 'ring-1 ring-red-500' : ''}`}
+                      className={`w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] ${errors.fullName ? 'ring-1 ring-red-500' : ''}`}
                       placeholder="Enter your full name"
+                      autoComplete="name"
                     />
                     {errors.fullName && <p className="text-[11px] text-red-500 mt-1">{errors.fullName}</p>}
                   </div>
@@ -174,8 +310,9 @@ export default function CheckoutPage() {
                       type="email"
                       value={shippingAddress.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A] ${errors.email ? 'ring-1 ring-red-500' : ''}`}
+                      className={`w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] ${errors.email ? 'ring-1 ring-red-500' : ''}`}
                       placeholder="you@example.com"
+                      autoComplete="email"
                     />
                     {errors.email && <p className="text-[11px] text-red-500 mt-1">{errors.email}</p>}
                   </div>
@@ -189,8 +326,9 @@ export default function CheckoutPage() {
                       type="tel"
                       value={shippingAddress.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A] ${errors.phone ? 'ring-1 ring-red-500' : ''}`}
+                      className={`w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] ${errors.phone ? 'ring-1 ring-red-500' : ''}`}
                       placeholder="+234 800 000 0000"
+                      autoComplete="tel"
                     />
                     {errors.phone && <p className="text-[11px] text-red-500 mt-1">{errors.phone}</p>}
                   </div>
@@ -204,8 +342,9 @@ export default function CheckoutPage() {
                       type="text"
                       value={shippingAddress.address}
                       onChange={(e) => handleInputChange('address', e.target.value)}
-                      className={`w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A] ${errors.address ? 'ring-1 ring-red-500' : ''}`}
+                      className={`w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] ${errors.address ? 'ring-1 ring-red-500' : ''}`}
                       placeholder="Enter your street address"
+                      autoComplete="street-address"
                     />
                     {errors.address && <p className="text-[11px] text-red-500 mt-1">{errors.address}</p>}
                   </div>
@@ -215,13 +354,27 @@ export default function CheckoutPage() {
                     <label className="block text-[12px] font-medium text-[#7A7A7A] mb-1">
                       City *
                     </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className={`w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A] ${errors.city ? 'ring-1 ring-red-500' : ''}`}
-                      placeholder="Enter your city"
-                    />
+                    <div className="relative">
+                      <select
+                        value={shippingAddress.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        disabled={!shippingAddress.state}
+                        className={`w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] appearance-none cursor-pointer ${errors.city ? 'ring-1 ring-red-500' : ''} ${!shippingAddress.state ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        autoComplete="address-level2"
+                      >
+                        <option value="">Select city</option>
+                        {shippingAddress.state && nigerianCities[shippingAddress.state]?.map(city => (
+                          <option key={city} value={city}>{city}</option>
+                        ))}
+                      </select>
+                      <Image
+                        src="/images/icons/dropdown.svg"
+                        alt=""
+                        width={10}
+                        height={6}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                      />
+                    </div>
                     {errors.city && <p className="text-[11px] text-red-500 mt-1">{errors.city}</p>}
                   </div>
 
@@ -234,7 +387,8 @@ export default function CheckoutPage() {
                       <select
                         value={shippingAddress.state}
                         onChange={(e) => handleInputChange('state', e.target.value)}
-                        className={`w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A] appearance-none cursor-pointer ${errors.state ? 'ring-1 ring-red-500' : ''}`}
+                        className={`w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] appearance-none cursor-pointer ${errors.state ? 'ring-1 ring-red-500' : ''}`}
+                        autoComplete="address-level1"
                       >
                         <option value="">Select state</option>
                         {nigerianStates.map(state => (
@@ -261,67 +415,96 @@ export default function CheckoutPage() {
                       type="text"
                       value={shippingAddress.postalCode}
                       onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                      className="w-full px-4 py-3 bg-[#EFEFEF] text-[14px] text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#F4008A]"
+                      className="w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px]"
                       placeholder="Enter postal code"
+                      autoComplete="postal-code"
                     />
+                  </div>
+
+                  {/* Country */}
+                  <div>
+                    <label className="block text-[12px] font-medium text-[#7A7A7A] mb-1">
+                      Country *
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={shippingAddress.country}
+                        onChange={(e) => handleInputChange('country', e.target.value)}
+                        className="w-full px-[8px] py-[8px] bg-[#EFEFEF] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px] appearance-none cursor-pointer"
+                        autoComplete="country"
+                      >
+                        <option value="Nigeria">Nigeria</option>
+                      </select>
+                      <Image
+                        src="/images/icons/dropdown.svg"
+                        alt=""
+                        width={10}
+                        height={6}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Payment Method */}
-              <div className="bg-white p-6 rounded-[2px] shadow-sm">
-                <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-6">Payment Method</h2>
-                
+              <div className="bg-white p-6 rounded-[2px] border-[0.5px] border-[#B7B7B7]">
+                <h2 className="text-[16px] font-medium text-[#1F1F1F] mb-6">Payment Method</h2>
+
                 <div className="space-y-3">
                   {/* Paystack */}
-                  <label className={`flex items-center gap-4 p-4 border cursor-pointer transition-all ${paymentMethod === 'paystack' ? 'border-[#F4008A] bg-pink-50' : 'border-[#E6E6E6] hover:border-[#8D8D8D]'}`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="paystack"
-                      checked={paymentMethod === 'paystack'}
-                      onChange={() => setPaymentMethod('paystack')}
-                      className="w-4 h-4 accent-[#F4008A]"
-                    />
+                  <label
+                    className={`flex items-start gap-4 p-4 rounded-[2px] cursor-pointer transition-all border ${paymentMethod === 'paystack'
+                      ? 'bg-[#EFEFEF] border-transparent'
+                      : 'bg-[#EFEFEF] border-transparent hover:border-[#F4008A]'
+                      }`}
+                    onClick={() => setPaymentMethod('paystack')}
+                  >
+                    <div className="mt-1">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {paymentMethod === 'paystack' ? (
+                          <>
+                            <rect x="1" y="1" width="22" height="22" rx="2" stroke="#F4008A" strokeWidth="1" fill="none" />
+                            <circle cx="12" cy="12" r="6" fill="#F4008A" className="transition-all duration-200" />
+                          </>
+                        ) : (
+                          <>
+                            <rect x="1" y="1" width="22" height="22" rx="2" stroke="#8D8D8D" strokeWidth="1" fill="none" />
+                            <circle cx="12" cy="12" r="4" fill="#8D8D8D" className="transition-all duration-200" />
+                          </>
+                        )}
+                      </svg>
+                    </div>
                     <div className="flex-1">
-                      <p className="text-[14px] font-medium text-[#1F1F1F]">Paystack</p>
+                      <p className={`text-[14px] font-medium tracking-[-0.28px] leading-[1.8] ${paymentMethod === 'paystack' ? 'text-[#1F1F1F]' : 'text-[#8D8D8D]'}`}>Paystack</p>
                       <p className="text-[12px] text-[#8D8D8D]">Pay with card, bank transfer, or USSD</p>
                     </div>
                     <div className="flex gap-2">
-                      <div className="w-8 h-5 bg-[#EFEFEF] rounded-[2px] flex items-center justify-center text-[8px] font-bold text-[#8D8D8D]">VISA</div>
-                      <div className="w-8 h-5 bg-[#EFEFEF] rounded-[2px] flex items-center justify-center text-[8px] font-bold text-[#8D8D8D]">MC</div>
+                      <div className="w-8 h-5 bg-white rounded-[2px] flex items-center justify-center border border-[#E6E6E6]">
+                        <Image src="/images/visa.svg" alt="Visa" width={24} height={8} className="object-contain" />
+                      </div>
+                      <div className="w-8 h-5 bg-white rounded-[2px] flex items-center justify-center border border-[#E6E6E6]">
+                        <Image src="/images/mastercard.svg" alt="Mastercard" width={24} height={15} className="object-contain" />
+                      </div>
                     </div>
                   </label>
 
-                  {/* Flutterwave */}
-                  <label className={`flex items-center gap-4 p-4 border cursor-pointer transition-all ${paymentMethod === 'flutterwave' ? 'border-[#F4008A] bg-pink-50' : 'border-[#E6E6E6] hover:border-[#8D8D8D]'}`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="flutterwave"
-                      checked={paymentMethod === 'flutterwave'}
-                      onChange={() => setPaymentMethod('flutterwave')}
-                      className="w-4 h-4 accent-[#F4008A]"
-                    />
-                    <div className="flex-1">
-                      <p className="text-[14px] font-medium text-[#1F1F1F]">Flutterwave</p>
-                      <p className="text-[12px] text-[#8D8D8D]">Pay with card, bank, mobile money</p>
+                  {/* Crypto (Coinbase) */}
+                  <label className="flex items-start gap-4 p-4 rounded-[2px] border border-transparent bg-[#EFEFEF] opacity-60 cursor-not-allowed">
+                    <div className="mt-1">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="1" width="22" height="22" rx="2" stroke="#8D8D8D" strokeWidth="1" fill="none" />
+                        <circle cx="12" cy="12" r="4" fill="#8D8D8D" className="transition-all duration-200" />
+                      </svg>
                     </div>
-                  </label>
-
-                  {/* Bank Transfer */}
-                  <label className={`flex items-center gap-4 p-4 border cursor-pointer transition-all ${paymentMethod === 'bank' ? 'border-[#F4008A] bg-pink-50' : 'border-[#E6E6E6] hover:border-[#8D8D8D]'}`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="bank"
-                      checked={paymentMethod === 'bank'}
-                      onChange={() => setPaymentMethod('bank')}
-                      className="w-4 h-4 accent-[#F4008A]"
-                    />
                     <div className="flex-1">
-                      <p className="text-[14px] font-medium text-[#1F1F1F]">Direct Bank Transfer</p>
-                      <p className="text-[12px] text-[#8D8D8D]">Transfer directly to our bank account</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[14px] font-medium text-[#8D8D8D] tracking-[-0.28px] leading-[1.8]">Pay with Crypto</p>
+                        <span className="px-2 py-0.5 bg-pink-100 text-[#F4008A] text-[10px] font-medium rounded-full">
+                          Coming Soon
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-[#8D8D8D]">Pay with Base, Ethereum, USDC, and more</p>
                     </div>
                   </label>
                 </div>
@@ -330,17 +513,21 @@ export default function CheckoutPage() {
 
             {/* Right Column - Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white p-6 rounded-[2px] shadow-sm sticky top-24">
-                <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-6">Order Summary</h2>
-                
+              <div className="bg-white p-6 rounded-[2px] border-[0.5px] border-[#B7B7B7] sticky top-24">
+                <h2 className="text-[16px] font-medium text-[#1F1F1F] mb-6">Order Summary</h2>
+
                 {/* Items */}
                 <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3 pb-4 border-b border-[#E6E6E6]">
-                      <div className="w-16 h-16 bg-[#EFEFEF] rounded-[2px] flex items-center justify-center flex-shrink-0">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[#8D8D8D]">
-                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                      <div className="w-16 h-16 rounded-[2px] flex items-center justify-center flex-shrink-0">
+                        <Image
+                          src={getMaterialIcon(item.config.material)}
+                          alt={item.config.material}
+                          width={40}
+                          height={40}
+                          className="object-contain"
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[14px] font-medium text-[#1F1F1F] truncate">{item.modelName}</p>
@@ -374,14 +561,14 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="rounded-[2px] w-full mt-6 py-4 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)' }}
+                  className="rounded-[2px] w-full mt-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
+                  style={{ background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)' }}
                 >
                   {isProcessing ? (
                     <span className="flex items-center justify-center gap-2">
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
                       Processing...
                     </span>

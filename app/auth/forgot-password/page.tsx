@@ -2,108 +2,103 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function ForgotPasswordPage() {
-  const { resetPassword } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setEmailError('');
     setLoading(true);
 
-    const { error } = await resetPassword(email);
+    try {
+      const response = await fetch('/api/auth/request-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      setSuccess(true);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setEmailError(data.error || 'Failed to send PIN. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Success! Redirect to PIN verification page
+      router.push(`/auth/verify-pin?email=${encodeURIComponent(email)}`);
+    } catch (error) {
+      setEmailError('Something went wrong. Please try again.');
       setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-[calc(100vh-72px)] bg-[#EDEDED] flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <div className="bg-white p-8 shadow-sm text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-            </div>
-            <h1 className="text-[24px] font-semibold text-[#1F1F1F] mb-3">Check Your Email</h1>
-            <p className="text-[14px] text-[#7A7A7A] mb-8">
-              We&apos;ve sent password reset instructions to <strong>{email}</strong>.
-              Click the link in the email to reset your password.
+  return (
+    <div className="min-h-[calc(100vh-72px)] bg-white flex flex-col items-center justify-center px-[133px] antialiased -mt-[32px]">
+      <div className="w-full max-w-[1176px] flex flex-col items-center gap-[24px]">
+        {/* Heading Section */}
+        <div className="flex flex-col gap-[16px] w-[318.43px]">
+          <div className="flex flex-col gap-[8px]">
+            <h1 className="font-semibold text-[24px] leading-none text-black capitalize">
+              Confirm Email
+            </h1>
+            <p className="font-normal text-[14px] leading-[16px] text-black">
+              Enter your email address and we&apos;ll send you instructions to reset your password.
             </p>
-            <Link
-              href="/auth/login"
-              className="rounded-[2px] inline-block px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
-              style={{
-                background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
-              }}
-            >
-              Back to Login
-            </Link>
           </div>
         </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="min-h-[calc(100vh-72px)] bg-[#EDEDED] flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-white p-8 shadow-sm">
-          <h1 className="text-[28px] font-semibold text-[#1F1F1F] mb-2">Forgot Password?</h1>
-          <p className="text-[14px] text-[#7A7A7A] mb-8">
-            Enter your email address and we&apos;ll send you instructions to reset your password.
-          </p>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-[2px]">
-              <p className="text-[14px] text-red-600">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-[14px] font-medium text-[#1F1F1F] mb-2">
-                Email Address
+        {/* Form Section */}
+        <div className="w-[320px] flex flex-col gap-[16px]">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]">
+            {/* Email Input */}
+            <div className="flex flex-col gap-[4px]">
+              <label htmlFor="email" className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
+                Email
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError('');
+                }}
+                placeholder="Muripress@gmail.com"
+                pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
                 required
-                className="w-full px-4 py-3 border border-[#E6E6E6] text-[14px] text-[#1F1F1F] focus:outline-none focus:border-[#F4008A]"
-                placeholder="you@example.com"
+                disabled={loading}
+                className={`bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full rounded-[2px] ${
+                  emailError ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-[#F4008A]'
+                }`}
               />
+              {emailError && (
+                <p className="text-[12px] text-red-600 mt-1">{emailError}</p>
+              )}
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="rounded-[2px] w-full py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 disabled:opacity-50"
+              className="text-white text-[14px] font-medium uppercase tracking-[0.28px] px-[24px] py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
               style={{
-                background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
+                background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
               }}
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {loading ? 'SENDING...' : 'Send Reset Link'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[14px] text-[#7A7A7A]">
-            Remember your password?{' '}
-            <Link href="/auth/login" className="text-[#F4008A] hover:underline font-medium">
+          {/* Bottom Link */}
+          <p className="text-[12px] leading-[1.3] font-normal capitalize">
+            <span className="text-black">Remember your password? </span>
+            <Link href="/auth/login" className="text-[#F4008A] underline hover:no-underline">
               Sign In
             </Link>
           </p>

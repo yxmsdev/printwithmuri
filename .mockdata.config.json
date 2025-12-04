@@ -1,0 +1,56 @@
+{
+  "mockData": {
+    "enabled": true,
+    "autoInitialize": true,
+    "version": "1.0.0",
+    "description": "Mock data configuration for Muri Press Web"
+  },
+  "data": {
+    "orders": {
+      "count": 6,
+      "totalValue": 420080,
+      "currency": "NGN",
+      "statuses": {
+        "received": 1,
+        "reviewing": 1,
+        "printing": 1,
+        "quality_check": 0,
+        "ready_for_delivery": 1,
+        "out_for_delivery": 1,
+        "delivered": 1
+      }
+    },
+    "bagItems": {
+      "count": 3,
+      "totalValue": 123830
+    },
+    "drafts": {
+      "count": 3
+    }
+  },
+  "pricing": {
+    "currency": "NGN",
+    "deliveryFee": 2500,
+    "setupFee": 500,
+    "machineRate": 2000,
+    "materialRates": {
+      "PLA": 150,
+      "PETG": 180,
+      "ABS": 170,
+      "Resin": 350
+    }
+  },
+  "files": {
+    "data": "lib/mockData.ts",
+    "init": "lib/initMockData.ts",
+    "component": "components/DevMockDataControl.tsx",
+    "guide": "MOCK_DATA_GUIDE.md",
+    "summary": "MOCK_DATA_SUMMARY.md"
+  },
+  "commands": {
+    "init": "initMockData()",
+    "clear": "clearMockData()",
+    "reset": "reinitializeMockData()",
+    "summary": "getMockDataSummary()"
+  }
+}

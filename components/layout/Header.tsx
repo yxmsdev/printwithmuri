@@ -9,6 +9,7 @@ import ComingSoonContent from '@/components/layout/ComingSoonContent';
 import BagModal from '@/components/bag/BagModal';
 import { useBagStore } from '@/stores/useBagStore';
 import { useDraftsStore } from '@/stores/useDraftsStore';
+import { useProfileImageStore } from '@/stores/useProfileImageStore';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
@@ -31,8 +32,14 @@ const Header = () => {
   const drafts = useDraftsStore((state) => state.drafts);
   const draftCount = drafts.length;
 
+  // Get profile image from store
+  const profileImage = useProfileImageStore((state) => state.profileImage);
+
   // Get user's name or email
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest User';
+
+  // Get user type from metadata (defaults to 'creator')
+  const userType = (user?.user_metadata?.user_type as 'business' | 'creator') || 'creator';
 
   // Close account menu when clicking outside
   useEffect(() => {
@@ -85,26 +92,26 @@ const Header = () => {
 
   return (
     <>
-      <header className="border-b border-gray-200 bg-white sticky top-0 z-40 h-[56px]">
+      <header className="bg-white sticky top-0 z-40 h-[56px]">
         <div className="container mx-auto px-[115px] h-full flex items-center justify-between max-w-[1440px]">
           {/* Left: Service Navigation */}
           <nav className="flex items-center gap-4">
             <Link
               href="/"
               onClick={handle3DClick}
-              className="text-[#F4008A] font-medium text-[13px] uppercase hover:opacity-80 transition-opacity leading-[1.37]"
+              className="text-[#F4008A] font-medium text-[14px] uppercase hover:opacity-80 transition-opacity leading-[1.37]"
             >
               3D
             </Link>
             <button
               onClick={() => handleOpenComingSoon('paper')}
-              className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+              className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
             >
               PAPER
             </button>
             <button
               onClick={() => handleOpenComingSoon('merch')}
-              className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+              className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
             >
               MERCH
             </button>
@@ -126,7 +133,7 @@ const Header = () => {
             <Link
               href="/drafts"
               onClick={handleDraftsClick}
-              className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+              className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
             >
               DRAFTS({draftCount})
             </Link>
@@ -135,32 +142,33 @@ const Header = () => {
             <div className="relative">
               <button
                 onClick={() => showBag ? closeBag() : openBag()}
-                className="text-[#8D8D8D] font-medium text-[13px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+                className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
               >
                 BAG({bagCount})
               </button>
             </div>
-            
-            {/* Account Button with Dropdown */}
+
+            {/* Account Button with Dropdown - Rounded square with different background for business/creator */}
             <div className="relative" ref={accountMenuRef}>
               <button
                 onClick={() => {
                   closeBag(); // Close bag when opening account menu
                   setShowAccountMenu(!showAccountMenu);
                 }}
-                className="w-8 h-8 hover:opacity-80 transition-opacity"
+                className="w-[26px] h-[26px] rounded-[2px] flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
               >
                 <Image
-                  src="/images/account-icon.svg"
+                  src={profileImage || (user && userType === 'business' ? '/images/Muri.svg' : '/images/Account profile.svg')}
                   alt="Account"
-                  width={32}
-                  height={32}
+                  width={26}
+                  height={26}
+                  className="w-[26px] h-[26px] object-cover"
                 />
               </button>
 
               {/* Account Dropdown Menu */}
               {showAccountMenu && (
-                <div className="absolute right-0 top-full mt-2 bg-white rounded-[2px] shadow-[0px_8px_86.4px_0px_rgba(0,0,0,0.15)] p-1 z-50 min-w-[160px]">
+                <div className="fixed right-[115px] top-[56px] bg-white rounded-[2px] shadow-xl border border-[#E6E6E6] p-1 z-50 min-w-[160px]">
                   {/* User Info */}
                   <div className="px-6 py-2 border-b border-[#B7B7B7]/50">
                     <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none truncate max-w-[140px]">
@@ -180,6 +188,18 @@ const Header = () => {
 
                   {user && (
                     <>
+                      {/* My Profile */}
+                      <Link
+                        href="/profile"
+                        onClick={() => {
+                          closeBag();
+                          setShowAccountMenu(false);
+                        }}
+                        className="block w-full px-3 py-2 rounded-[2px] text-[14px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
+                      >
+                        My Profile
+                      </Link>
+
                       {/* My Orders */}
                       <Link
                         href="/orders"
@@ -187,19 +207,19 @@ const Header = () => {
                           closeBag();
                           setShowAccountMenu(false);
                         }}
-                        className="block w-full px-3 py-2 rounded-[2px] text-[13px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
+                        className="block w-full px-3 py-2 rounded-[2px] text-[14px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors"
                       >
                         My Orders
                       </Link>
 
                       {/* Support */}
                       <Link
-                        href="/support"
+                        href="/legal"
                         onClick={() => {
                           closeBag();
                           setShowAccountMenu(false);
                         }}
-                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                        className="block w-full px-3 py-2 text-[14px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
                       >
                         Support
                       </Link>
@@ -207,7 +227,7 @@ const Header = () => {
                       {/* Log Out */}
                       <button
                         onClick={handleSignOut}
-                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                        className="block w-full px-3 py-2 text-[14px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
                       >
                         Log Out
                       </button>
@@ -219,7 +239,7 @@ const Header = () => {
                       {/* Sign In */}
                       <button
                         onClick={handleSignIn}
-                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
+                        className="block w-full px-3 py-2 text-[14px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
                       >
                         Sign In
                       </button>
@@ -231,7 +251,7 @@ const Header = () => {
                           closeBag();
                           setShowAccountMenu(false);
                         }}
-                        className="block w-full px-3 py-2 text-[13px] font-medium text-[#F4008A] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
+                        className="block w-full px-3 py-2 text-[14px] font-medium text-[#F4008A] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
                       >
                         Sign Up
                       </Link>
@@ -248,15 +268,18 @@ const Header = () => {
       {showBag && (
         <>
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-30" 
+          <div
+            className="fixed inset-0 z-30"
             onClick={closeBag}
           />
-          
+
           {/* Dropdown Panel */}
           <div className="fixed top-[56px] right-[115px] w-[380px] bg-white shadow-xl border border-[#E6E6E6] z-50">
-            <div className="p-4 border-b border-[#E6E6E6]">
+            <div className="p-4 border-b border-[#E6E6E6] flex items-center justify-between">
               <h2 className="text-[16px] font-medium text-[#1F1F1F]">Your Bag</h2>
+              <span className="text-[14px] text-[#7A7A7A]">
+                {bagItems.length} {bagItems.length === 1 ? 'item' : 'items'}
+              </span>
             </div>
             <div className="p-4">
               <BagModal onClose={closeBag} />
