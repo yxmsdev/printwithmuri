@@ -2,9 +2,11 @@
 
 import { ModelInfo, PrintConfig, PriceBreakdown, SlicerQuoteResponse, FileUploadResponse } from '@/types';
 import { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
 import { calculatePrice } from '@/lib/pricing';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface ConfigState {
   quantity: number;
@@ -93,6 +95,8 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   
   const addItem = useBagStore((state) => state.addItem);
   const openBag = useBagStore((state) => state.openBag);
+  const { user } = useAuth();
+  const router = useRouter();
 
   // Initialize fileId from initial fileId (from FileUpload)
   useEffect(() => {
@@ -154,7 +158,13 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   };
 
   // Manual slice function - called when user clicks "Slice Model" or "Re-slice Model"
-  const handleSliceModel = async (providedFileId?: string) => {
+  const handleSliceModel = async (providedFileId?: string, skipAuthCheck?: boolean) => {
+    // Require authentication to re-slice model (skip check for auto-slice after upload)
+    if (!skipAuthCheck && !user) {
+      router.push('/auth/signup?redirect=/');
+      return;
+    }
+
     console.log('🔍 handleSliceModel called with:', { providedFileId, stateFileId: fileId });
     const fileIdToUse = providedFileId || fileId;
 
@@ -279,6 +289,11 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   };
 
   const handleChangeClick = () => {
+    // Require authentication to change model
+    if (!user) {
+      router.push('/auth/signup?redirect=/');
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -405,7 +420,8 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       console.log('🎯 Starting Phase 2: Auto-slice with default settings');
 
       // Phase 2: Auto-slice with current settings (pass fileId directly to avoid race condition)
-      await handleSliceModel(uploadData.fileId);
+      // Skip auth check for auto-slice after initial upload
+      await handleSliceModel(uploadData.fileId, true);
 
     } catch (err) {
       console.error('❌ Upload error:', err);
@@ -715,8 +731,8 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                         }
                         handleSettingsChange();
                       }}
-                      className="w-4 h-4 rounded-sm border border-[#B7B7B7] bg-white checked:bg-[#F4008A] checked:border-[#F4008A] cursor-pointer appearance-none relative transition-all
-                        before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-white before:text-[10px] before:font-bold before:opacity-0 checked:before:opacity-100"
+                      className="w-[10px] h-[10px] rounded-sm border border-[#B7B7B7] bg-transparent checked:bg-transparent checked:border-[#F4008A] cursor-pointer appearance-none relative transition-all
+                        before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[#F4008A] before:text-[8px] before:font-bold before:opacity-0 checked:before:opacity-100"
                     />
                     <span className="text-[12px] font-medium text-[#1F1F1F] tracking-[-0.24px] leading-[1.8]">
                       Solid

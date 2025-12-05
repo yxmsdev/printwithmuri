@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import UserTypeSelector from '@/components/auth/UserTypeSelector';
@@ -10,6 +10,8 @@ import { professions, industries } from '@/lib/professions-industries';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const { signUp, signInWithGoogle } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
@@ -188,7 +190,7 @@ export default function SignUpPage() {
           </div>
           <p className="text-[12px] leading-[1.3] font-normal mt-[16px]">
             <span className="text-black">Already have an account? </span>
-            <Link href="/auth/login" className="text-[#F4008A] underline hover:no-underline">
+            <Link href={`/auth/login${redirectTo !== '/' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="text-[#F4008A] underline hover:no-underline">
               Sign in
             </Link>
           </p>
