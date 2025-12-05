@@ -64,8 +64,10 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source files
 COPY . .
 
-# Remove git metadata and cached build files to prevent path resolution issues
-RUN rm -rf .git .next
+# Remove git metadata, cached build files, and any TypeScript build cache to prevent path resolution issues
+RUN rm -rf .git .next .swc tsconfig.tsbuildinfo && \
+    find . -name "*.tsbuildinfo" -delete 2>/dev/null || true && \
+    ls -la
 
 # Build Next.js application
 RUN npm run build
@@ -88,13 +90,8 @@ COPY --from=base /usr/local/bin/prusa-slicer /usr/local/bin/prusa-slicer
 COPY --from=base /usr/local/bin/CuraEngine /usr/local/bin/CuraEngine
 COPY --from=base /opt/PrusaSlicer /opt/PrusaSlicer
 
-# Copy Next.js build output
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy PrusaSlicer config profiles
-COPY --from=builder --chown=nextjs:nodejs /app/config ./config
+# Copy the entire app from builder (non-standalone mode)
+COPY --from=builder --chown=nextjs:nodejs /app ./
 
 # Create temp directory for slicing
 RUN mkdir -p /tmp/slicing && chown nextjs:nodejs /tmp/slicing
@@ -107,4 +104,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
