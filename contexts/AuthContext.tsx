@@ -106,11 +106,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Use NEXT_PUBLIC_URL if available (for consistent redirects), otherwise fallback to window.location.origin
       const baseUrl = process.env.NEXT_PUBLIC_URL || window.location.origin;
+      const redirectTo = `${baseUrl}/auth/callback`;
+
+      console.log('🔐 AuthContext: Initiating Google Sign-In');
+      console.log('📍 Base URL:', baseUrl);
+      console.log('🔗 Redirect URL:', redirectTo);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${baseUrl}/auth/callback`,
+          redirectTo,
         },
       });
 

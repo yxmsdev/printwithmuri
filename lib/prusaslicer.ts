@@ -60,7 +60,11 @@ async function buildPrusaSlicerArgs(
   outputPath: string,
   config: SlicerConfig
 ): Promise<string[]> {
-  const { quality, material, infillDensity, infillType } = config; // Destructure infillType
+  const { quality, material, infillDensity } = config;
+
+  // Force rectilinear infill for 100% density as other patterns (like honeycomb) fail
+  const infillType = infillDensity === 100 ? 'rectilinear' : config.infillType;
+
 
   // Configuration file paths (use different path for dev vs production)
   // In production (Docker), config is at /app/config/prusaslicer
@@ -213,10 +217,10 @@ export async function sliceModel(
     const errorObj = error instanceof Error ? error : new Error(String(error));
     console.error('Error type:', errorObj.constructor.name);
     console.error('Error message:', errorObj.message);
-    if(error.stdout) {
+    if (error.stdout) {
       console.error('PrusaSlicer stdout:', error.stdout);
     }
-    if(error.stderr) {
+    if (error.stderr) {
       console.error('PrusaSlicer stderr:', error.stderr);
     }
     console.error('Error stack:', errorObj.stack);

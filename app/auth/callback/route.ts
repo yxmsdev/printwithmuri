@@ -9,10 +9,20 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        console.log(`🔐 [Callback] exchanging code for session...`);
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
         if (!error) {
-            return NextResponse.redirect(`${origin}${next}`);
+            console.log(`✅ [Callback] Success! User ID: ${data.session?.user?.id}`);
+            const baseUrl = process.env.NEXT_PUBLIC_URL || origin;
+            // Ensure we don't double slash if next starts with /
+            const redirectUrl = `${baseUrl}${next.startsWith('/') ? '' : '/'}${next}`;
+            return NextResponse.redirect(redirectUrl);
+        } else {
+            console.error('❌ [Callback] Error exchanging code:', error);
         }
+    } else {
+        console.error('❌ [Callback] No code found in URL');
     }
 
     // return the user to an error page with instructions

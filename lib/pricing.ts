@@ -24,8 +24,9 @@ const HOURLY_RATE = 2000;
 const MATERIAL_RATES = {
   PLA: 450,
   PETG: 600,
+  TPU: 900,
   ABS: 800,
-  Resin: 1200,
+  Resin: 3000,
 };
 
 const SETUP_FEE = 2500; // ₦ per unique model
