@@ -298,6 +298,12 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   };
 
   const handleAddToBag = () => {
+    // Require authentication to add to bag
+    if (!user) {
+      router.push('/auth/signup?redirect=/');
+      return;
+    }
+
     // Don't add if no changes have been made since last add
     if (!hasChanges) {
       // Just open the bag to show existing items

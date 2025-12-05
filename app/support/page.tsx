@@ -142,7 +142,8 @@ export default function SupportPage() {
   })).filter((category) => category.items.length > 0);
 
   return (
-    <div className="container mx-auto px-6 py-12 max-w-5xl">
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-6 py-12 max-w-5xl">
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Support Center</h1>
@@ -250,9 +251,8 @@ export default function SupportPage() {
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
-                        className={`flex-shrink-0 transition-transform ${
-                          isOpen ? 'rotate-180' : ''
-                        }`}
+                        className={`flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+                          }`}
                       >
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
@@ -290,6 +290,7 @@ export default function SupportPage() {
             Email Us Directly
           </a>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -176,7 +176,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-72px)] bg-white flex flex-col items-center justify-center px-[133px] antialiased -mt-[32px]">
+    <div className="min-h-[calc(100vh-72px)] bg-white flex flex-col items-center justify-center px-[133px] antialiased -mt-[32px] pt-[80px]">
       <div className="w-full max-w-[1176px] flex items-start justify-between gap-[68px]">
         {/* Left Side - Heading */}
         <div className="flex flex-col w-[318.43px]">
