@@ -12,10 +12,11 @@ const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 
 // Material cost per gram in NGN
 const MATERIAL_RATES: Record<string, number> = {
-  PLA: 350,
-  PETG: 500,
-  ABS: 700,
-  Resin: 1100,
+  PLA: 450,
+  PETG: 600,
+  TPU: 900,
+  ABS: 800,
+  Resin: 3000,
 };
 
 // Machine cost per hour
