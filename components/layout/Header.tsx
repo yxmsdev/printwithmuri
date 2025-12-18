@@ -113,15 +113,15 @@ const Header = () => {
               3D
             </Link>
             <Link
-              href="/paper"
+              href="/signage"
               onClick={closeBag}
               className={`font-medium text-[14px] uppercase transition-colors leading-[1.37] ${
                 useTransparentHeader
                   ? 'text-white/80 hover:text-white'
-                  : pathname === '/paper' ? 'text-[#F4008A]' : 'text-[#8D8D8D] hover:text-[#1F1F1F]'
+                  : pathname === '/signage' ? 'text-[#F4008A]' : 'text-[#8D8D8D] hover:text-[#1F1F1F]'
               }`}
             >
-              PAPER
+              SIGNAGE
             </Link>
             <Link
               href="/merch"
