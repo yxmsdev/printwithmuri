@@ -34,7 +34,7 @@ export default function CheckoutPage() {
   const { items, getSubtotal, clearBag } = useBagStore();
   const addOrder = useOrdersStore((state) => state.addOrder);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'crypto'>('paystack');
+  const [paymentMethod, setPaymentMethod] = useState<'paystack'>('paystack');
   const [deliveryMethod, setDeliveryMethod] = useState<'dispatch' | 'pickup'>('dispatch');
 
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
@@ -113,55 +113,9 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    try {
-      if (paymentMethod === 'crypto') {
-        const response = await fetch('/api/payments/coinbase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: total,
-            currency: 'NGN', // Coinbase Commerce handles currency conversion
-            description: `Order for ${shippingAddress.fullName}`,
-            metadata: {
-              customer_email: shippingAddress.email,
-              customer_name: shippingAddress.fullName,
-            },
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.hosted_url) {
-          // Create order before redirecting (status: pending)
-          const paymentReference = `CRYPTO-${data.id}`;
-          const orderData = createOrderFromCheckout(
-            items,
-            shippingAddress,
-            subtotal,
-            deliveryFee,
-            paymentReference
-          );
-          addOrder(orderData);
-          clearBag();
-
-          // Redirect to Coinbase Commerce
-          window.location.href = data.hosted_url;
-          return;
-        } else {
-          throw new Error(data.error || 'Failed to initialize crypto payment');
-        }
-      }
-
-      // For Paystack, validation is done, payment will be triggered by PaystackButton
-      // Reset processing state to allow button click
-      setIsProcessing(false);
-    } catch (error) {
-      console.error('Payment Error:', error);
-      alert('Payment initialization failed. Please try again.');
-      setIsProcessing(false);
-    }
+    // For Paystack, validation is done, payment will be triggered by PaystackButton
+    // Reset processing state to allow button click
+    setIsProcessing(false);
   };
 
   // Paystack configuration
@@ -238,17 +192,19 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-[calc(100vh-56px)] flex flex-col items-center justify-center bg-white p-8">
-        <div className="bg-white p-8 rounded-[2px] border-[0.5px] border-[#B7B7B7] text-center max-w-md">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="mx-auto mb-4 text-[#8D8D8D]">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" />
-            <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div className="bg-white p-8 rounded-[2px] text-center max-w-md">
+          <Image
+            src="/images/Bag_icon.svg"
+            alt="Empty bag"
+            width={64}
+            height={64}
+            className="mx-auto mb-4"
+          />
           <h2 className="text-[20px] font-medium text-[#1F1F1F] mb-2">Your bag is empty</h2>
           <p className="text-[14px] text-[#8D8D8D] mb-6">Add some items to your bag before checking out.</p>
           <Link
             href="/"
-            className="rounded-[2px] inline-block px-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px]"
+            className="rounded-[2px] inline-block px-8 py-[8px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)' }}
           >
             Start Shopping
@@ -550,7 +506,7 @@ export default function CheckoutPage() {
                     </div>
                   </label>
 
-                  {/* Crypto (Coinbase) */}
+                  {/* Crypto - Coming Soon */}
                   <label className="flex items-start gap-4 p-4 rounded-[2px] border border-transparent bg-[#EFEFEF] opacity-60 cursor-not-allowed">
                     <div className="mt-1">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -627,7 +583,7 @@ export default function CheckoutPage() {
                       onSuccess={handlePaystackSuccess}
                       onClose={handlePaystackClose}
                       disabled={isProcessing}
-                      className="rounded-[2px] w-full py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce paystack-button"
+                      className="rounded-[2px] w-full py-[8px] text-[14px] font-medium text-white tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce paystack-button"
                     />
                     <style jsx>{`
                       :global(.paystack-button) {
@@ -639,7 +595,7 @@ export default function CheckoutPage() {
                   <button
                     type="submit"
                     disabled={isProcessing}
-                    className="rounded-[2px] w-full mt-6 py-3 text-[14px] font-medium text-white uppercase tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
+                    className="rounded-[2px] w-full mt-6 py-[8px] text-[14px] font-medium text-white tracking-[0.28px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
                     style={{ background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)' }}
                   >
                     {isProcessing ? (

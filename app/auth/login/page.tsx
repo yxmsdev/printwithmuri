@@ -83,7 +83,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-[8px] bg-white border border-black rounded-[2px] px-[24px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] hover:bg-[#F6F6F6] transition-colors uppercase"
+            className="w-full flex items-center justify-center gap-[8px] bg-white border border-black rounded-[2px] px-8 py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] hover:bg-[#F6F6F6] transition-colors uppercase"
           >
             <svg width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M17.64 9.20443C17.64 8.56625 17.5827 7.95262 17.4764 7.36353H9V10.8449H13.8436C13.635 11.9699 13.0009 12.9231 12.0477 13.5613V15.8194H14.9564C16.6582 14.2526 17.64 11.9453 17.64 9.20443Z" fill="#4285F4" />
@@ -158,7 +158,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="text-white text-[14px] font-medium uppercase tracking-[0.28px] px-[24px] py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
+              className="text-white text-[14px] font-medium tracking-[0.28px] px-8 py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
               style={{
                 background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
               }}

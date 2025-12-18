@@ -11,11 +11,13 @@ import { useBagStore } from '@/stores/useBagStore';
 import { useDraftsStore } from '@/stores/useDraftsStore';
 import { useProfileImageStore } from '@/stores/useProfileImageStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLandingStore } from '@/stores/useLandingStore';
 
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const isLandingPage = useLandingStore((state) => state.isLandingPage);
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [comingSoonType, setComingSoonType] = useState<'paper' | 'merch'>('paper');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -74,121 +76,134 @@ const Header = () => {
 
   const handle3DClick = (e: React.MouseEvent) => {
     closeBag(); // Close bag when navigating
-    // If we're already on the home page, trigger a reset
-    if (pathname === '/') {
-      e.preventDefault();
-      router.push('/?reset=' + Date.now());
-    }
-    // Otherwise, let the Link navigate normally
+    e.preventDefault();
+    // Always go to the 3D uploader screen
+    router.push('/?uploader=' + Date.now());
   };
 
   const handleDraftsClick = () => {
     closeBag(); // Close bag when navigating to drafts
   };
 
-  const handleLogoClick = () => {
+  const handleLogoClick = (e: React.MouseEvent) => {
     closeBag(); // Close bag when clicking logo
+    e.preventDefault();
+    // Go to landing page (reset to hero)
+    router.push('/?landing=' + Date.now());
   };
+
+  // Determine if we should use transparent header (only on landing page at root path)
+  const useTransparentHeader = pathname === '/' && isLandingPage;
 
   return (
     <>
-      <header className="bg-white sticky top-0 z-40 h-[56px]">
-        <div className="container mx-auto px-[115px] h-full flex items-center justify-between max-w-[1440px]">
+      <header className={`top-0 z-40 h-[56px] transition-colors ${useTransparentHeader ? 'absolute w-full bg-black/40' : 'bg-white sticky'}`}>
+        <div className="container mx-auto px-[115px] h-full flex items-center justify-between max-w-[1440px] relative">
           {/* Left: Service Navigation */}
           <nav className="flex items-center gap-4">
             <Link
               href="/"
               onClick={handle3DClick}
-              className="text-[#F4008A] font-medium text-[14px] uppercase hover:opacity-80 transition-opacity leading-[1.37]"
+              className={`font-medium text-[14px] uppercase transition-colors leading-[1.37] ${
+                useTransparentHeader
+                  ? 'text-white/80 hover:text-white'
+                  : pathname === '/' ? 'text-[#F4008A]' : 'text-[#8D8D8D] hover:text-[#1F1F1F]'
+              }`}
             >
               3D
             </Link>
-            <button
-              onClick={() => handleOpenComingSoon('paper')}
-              className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+            <Link
+              href="/paper"
+              onClick={closeBag}
+              className={`font-medium text-[14px] uppercase transition-colors leading-[1.37] ${
+                useTransparentHeader
+                  ? 'text-white/80 hover:text-white'
+                  : pathname === '/paper' ? 'text-[#F4008A]' : 'text-[#8D8D8D] hover:text-[#1F1F1F]'
+              }`}
             >
               PAPER
-            </button>
-            <button
-              onClick={() => handleOpenComingSoon('merch')}
-              className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+            </Link>
+            <Link
+              href="/merch"
+              onClick={closeBag}
+              className={`font-medium text-[14px] uppercase transition-colors leading-[1.37] ${
+                useTransparentHeader
+                  ? 'text-white/80 hover:text-white'
+                  : pathname === '/merch' ? 'text-[#F4008A]' : 'text-[#8D8D8D] hover:text-[#1F1F1F]'
+              }`}
             >
               MERCH
-            </button>
+            </Link>
           </nav>
 
           {/* Center: Logo */}
           <Link href="/" onClick={handleLogoClick} className="absolute left-1/2 -translate-x-1/2">
             <Image
-              src="/images/logo.svg"
+              src="/images/Muri_Beta.svg"
               alt="Print with Muri"
               width={81}
               height={33}
               priority
+              className={useTransparentHeader ? 'brightness-125' : ''}
             />
           </Link>
 
           {/* Right: User Actions */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/drafts"
-              onClick={handleDraftsClick}
-              className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
-            >
-              DRAFTS({draftCount})
-            </Link>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <Link
+                  href="/drafts"
+                  onClick={handleDraftsClick}
+                  className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+                >
+                  DRAFTS({draftCount})
+                </Link>
 
-            {/* Bag Button with Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => showBag ? closeBag() : openBag()}
-                className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
-              >
-                BAG({bagCount})
-              </button>
-            </div>
+                {/* Bag Button with Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => showBag ? closeBag() : openBag()}
+                    className="text-[#8D8D8D] font-medium text-[14px] uppercase hover:text-[#1F1F1F] transition-colors leading-[1.37]"
+                  >
+                    BAG({bagCount})
+                  </button>
+                </div>
 
-            {/* Account Button with Dropdown - Rounded square with different background for business/creator */}
-            <div className="relative" ref={accountMenuRef}>
-              <button
-                onClick={() => {
-                  closeBag(); // Close bag when opening account menu
-                  setShowAccountMenu(!showAccountMenu);
-                }}
-                className="w-[26px] h-[26px] rounded-[2px] flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
-              >
-                <Image
-                  src={profileImage || (user && userType === 'business' ? '/images/Muri.svg' : '/images/Account profile.svg')}
-                  alt="Account"
-                  width={26}
-                  height={26}
-                  className="w-[26px] h-[26px] object-cover"
-                />
-              </button>
+                {/* Account Button with Dropdown */}
+                <div className="relative" ref={accountMenuRef}>
+                  <button
+                    onClick={() => {
+                      closeBag();
+                      setShowAccountMenu(!showAccountMenu);
+                    }}
+                    className="w-[26px] h-[26px] rounded-[2px] flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
+                  >
+                    <Image
+                      src={profileImage || (userType === 'business' ? '/images/Company_profile.svg' : '/images/Account profile.svg')}
+                      alt="Account"
+                      width={26}
+                      height={26}
+                      className="w-[26px] h-[26px] object-cover"
+                    />
+                  </button>
 
-              {/* Account Dropdown Menu */}
-              {showAccountMenu && (
-                <div className="fixed right-[115px] top-[56px] bg-white rounded-[2px] shadow-xl border border-[#E6E6E6] p-1 z-50 min-w-[160px]">
-                  {/* User Info */}
-                  <div className="px-6 py-2 border-b border-[#B7B7B7]/50">
-                    <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none truncate max-w-[140px]">
-                      {userName}
-                    </p>
-                    {!user && (
-                      <p className="text-[10px] text-[#F4008A] text-center leading-[1.37] mt-1">
-                        Sign in to save
-                      </p>
-                    )}
-                    {user && user.email && (
-                      <p className="text-[10px] text-[#7A7A7A] text-center leading-[1.37] mt-1 truncate max-w-[140px]">
-                        {user.email}
-                      </p>
-                    )}
-                  </div>
+                  {/* Account Dropdown Menu */}
+                  {showAccountMenu && (
+                    <div className="fixed right-[115px] top-[56px] bg-white rounded-[2px] shadow-xl border border-[#E6E6E6] p-1 z-50 min-w-[160px]">
+                      {/* User Info */}
+                      <div className="px-6 py-2 border-b border-[#B7B7B7]/50">
+                        <p className="text-[14px] font-medium text-[#1F1F1F] text-center capitalize leading-none truncate max-w-[140px]">
+                          {userName}
+                        </p>
+                        {user.email && (
+                          <p className="text-[10px] text-[#7A7A7A] text-center leading-[1.37] mt-1 truncate max-w-[140px]">
+                            {user.email}
+                          </p>
+                        )}
+                      </div>
 
-                  {user && (
-                    <>
-                      {/* My Profile */}
+                      {/* Preferences */}
                       <Link
                         href="/profile"
                         onClick={() => {
@@ -197,7 +212,7 @@ const Header = () => {
                         }}
                         className="block w-full px-3 py-2 rounded-[2px] text-[14px] font-medium text-black text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
                       >
-                        My Profile
+                        Preferences
                       </Link>
 
                       {/* My Orders */}
@@ -231,35 +246,46 @@ const Header = () => {
                       >
                         Log Out
                       </button>
-                    </>
-                  )}
-
-                  {!user && (
-                    <>
-                      {/* Sign In */}
-                      <button
-                        onClick={handleSignIn}
-                        className="block w-full px-3 py-2 text-[14px] font-medium text-[#1F1F1F] text-center capitalize hover:bg-[#E6E6E6] transition-colors mt-1"
-                      >
-                        Sign In
-                      </button>
-
-                      {/* Sign Up */}
-                      <Link
-                        href="/auth/signup"
-                        onClick={() => {
-                          closeBag();
-                          setShowAccountMenu(false);
-                        }}
-                        className="block w-full px-3 py-2 text-[14px] font-medium text-[#F4008A] text-center capitalize hover:bg-[#E6E6E6] transition-colors"
-                      >
-                        Sign Up
-                      </Link>
-                    </>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Log In Button */}
+                <Link
+                  href="/auth/login"
+                  className={`px-[24px] py-[8px] text-[14px] font-normal tracking-[0.28px] rounded-[2px] transition-colors ${
+                    useTransparentHeader
+                      ? 'text-white hover:bg-white/10'
+                      : 'text-[#1F1F1F] hover:bg-[#F5F5F5]'
+                  }`}
+                  style={{
+                    boxShadow: useTransparentHeader
+                      ? 'inset 0 0 0 1px rgba(255,255,255,0.5)'
+                      : 'inset 0 0 0 1px #B7B7B7',
+                  }}
+                >
+                  Log In
+                </Link>
+
+                {/* Sign Up Button */}
+                <Link
+                  href="/auth/signup"
+                  className={`px-6 py-2 text-[14px] font-normal tracking-[0.28px] rounded-[2px] transition-all ${
+                    useTransparentHeader
+                      ? 'text-white hover:bg-white/10'
+                      : 'text-white hover:opacity-90'
+                  }`}
+                  style={useTransparentHeader
+                    ? { boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }
+                    : { background: 'linear-gradient(180deg, #464750 0%, #000000 100%)' }
+                  }
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

@@ -32,6 +32,10 @@ const MATERIAL_RATES = {
 const SETUP_FEE = 2500; // ₦ per unique model
 const TIME_BUFFER = 3; // 15% buffer for supports, travel, etc.
 
+// Minimum pricing
+const MINIMUM_WEIGHT = 10; // 10 grams
+const MINIMUM_PRICE = 7000; // ₦7,000 for anything ≤10g
+
 /**
  * Calculate the complete price breakdown for a print job
  */
@@ -53,7 +57,9 @@ export function calculatePrice(
   // Calculate costs
   const machineCost = Math.round(printTime * HOURLY_RATE);
   const materialCost = Math.round(estimatedWeight * MATERIAL_RATES[config.material]);
-  const itemTotal = machineCost + materialCost + SETUP_FEE;
+  const calculatedTotal = machineCost + materialCost + SETUP_FEE;
+  // Apply minimum price of ₦7,000 for prints ≤10g
+  const itemTotal = estimatedWeight <= MINIMUM_WEIGHT ? Math.max(calculatedTotal, MINIMUM_PRICE) : calculatedTotal;
   const subtotal = itemTotal * config.quantity;
 
   return {
@@ -96,4 +102,6 @@ export const PRICING_CONSTANTS = {
   MATERIAL_RATES,
   SETUP_FEE,
   TIME_BUFFER,
+  MINIMUM_WEIGHT,
+  MINIMUM_PRICE,
 };

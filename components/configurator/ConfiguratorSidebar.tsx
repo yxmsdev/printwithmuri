@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
 import { calculatePrice } from '@/lib/pricing';
 import { useAuth } from '@/contexts/AuthContext';
+import Tooltip from '@/components/ui/Tooltip';
 
 export interface ConfigState {
   quantity: number;
@@ -67,7 +68,6 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   const [infillExpanded, setInfillExpanded] = useState(false);
   const [infillType, setInfillType] = useState(initialConfig?.infillType ?? 'Honeycomb');
   const [infillDensity, setInfillDensity] = useState(initialConfig?.infillDensity ?? 25);
-  const [isSliderDragging, setIsSliderDragging] = useState(false);
   const [isSolid, setIsSolid] = useState(initialConfig?.infillDensity === 100);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
@@ -76,7 +76,6 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   const [instructions, setInstructions] = useState(initialConfig?.instructions ?? '');
   const [addedToBag, setAddedToBag] = useState(false);
   const [hasChanges, setHasChanges] = useState(true); // Track if user has made changes since last add
-  const [dimensionUnit, setDimensionUnit] = useState<'mm' | 'cm' | 'in'>('mm');
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,18 +143,6 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       instructions,
     }),
   }));
-
-  // Convert dimensions based on selected unit
-  const convertDimension = (mmValue: number): string => {
-    switch (dimensionUnit) {
-      case 'cm':
-        return (mmValue / 10).toFixed(1);
-      case 'in':
-        return (mmValue / 25.4).toFixed(2);
-      default:
-        return mmValue.toFixed(0);
-    }
-  };
 
   // Manual slice function - called when user clicks "Slice Model" or "Re-slice Model"
   const handleSliceModel = async (providedFileId?: string, skipAuthCheck?: boolean) => {
@@ -518,29 +505,20 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       </div>
 
       {/* Decorative color stripes - Fixed below title */}
-      <div className="h-px relative w-full overflow-hidden flex-shrink-0" style={{ mixBlendMode: 'multiply' }}>
-        <div className="absolute left-0 w-[28px] h-px bg-[#FFD913] opacity-80" />
-        <div className="absolute left-[26px] w-[28px] h-px bg-[#CF2886] opacity-80" />
-        <div className="absolute left-[52px] w-[28px] h-px bg-[#41D4EA] opacity-80" />
-        <div className="absolute left-[78px] w-[28px] h-px bg-[#FFD913] opacity-80" />
-        <div className="absolute left-[104px] w-[28px] h-px bg-[#CF2886] opacity-80" />
-        <div className="absolute left-[130px] w-[28px] h-px bg-[#41D4EA] opacity-80" />
-        <div className="absolute left-[156px] w-[28px] h-px bg-[#FFD913] opacity-80" />
-        <div className="absolute left-[182px] w-[28px] h-px bg-[#CF2886] opacity-80" />
-        <div className="absolute left-[208px] w-[28px] h-px bg-[#41D4EA] opacity-80" />
-        <div className="absolute left-[234px] w-[28px] h-px bg-[#FFD913] opacity-80" />
-        <div className="absolute left-[260px] w-[28px] h-px bg-[#CF2886] opacity-80" />
-        <div className="absolute left-[286px] w-[28px] h-px bg-[#41D4EA] opacity-80" />
-      </div>
+      <div
+        className="h-[1px] w-full flex-shrink-0"
+        style={{
+          mixBlendMode: 'multiply',
+          background: 'repeating-linear-gradient(to right, #FFD913 0px, #FFD913 28px, #CF2886 28px, #CF2886 56px, #41D4EA 56px, #41D4EA 84px)',
+          opacity: 0.8
+        }}
+      />
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         {/* Quantity */}
         <div className="px-4 py-4 border-b border-[#E6E6E6] flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <label className="text-[14px] font-medium text-[#7A7A7A] capitalize leading-[12px]">Quantity</label>
-            <Image src="/images/icons/info.svg" alt="" width={12} height={12} />
-          </div>
+          <label className="text-[14px] font-medium text-[#7A7A7A] capitalize leading-[12px]">Quantity</label>
           <div className="flex items-center gap-3 border-[0.75px] border-[#B7B7B7] rounded-[2px] px-3 py-1">
             <button onClick={decrementQuantity} className="w-3 h-3">
               <Image src="/images/icons/plus.svg" alt="Decrease" width={8} height={2} className="w-3 h-auto" />
@@ -574,9 +552,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
 
         {/* Quality */}
         <div className="px-4 py-4 border-b border-[#E6E6E6] flex items-center gap-3">
-          <div className="flex items-center gap-1 w-[120px]">
+          <div className="flex items-center gap-2 w-[120px]">
             <label className="text-[14px] font-medium text-[#7A7A7A] capitalize leading-[12px]">Quality</label>
-            <Image src="/images/icons/info.svg" alt="" width={12} height={12} />
+            <Tooltip content="Print resolution and layer height. Higher quality means finer detail but longer print time and higher cost." />
           </div>
           <div className="relative flex-1">
             <select
@@ -605,7 +583,20 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           <div className="relative flex-1">
             <select
               value={material}
-              onChange={(e) => { setMaterial(e.target.value); handleSettingsChange(); }}
+              onChange={(e) => {
+                const newMaterial = e.target.value;
+                setMaterial(newMaterial);
+                // Automatically set to solid for Resin
+                if (newMaterial === 'Resin') {
+                  setInfillDensity(100);
+                  setIsSolid(true);
+                } else {
+                  // Return to default settings for FDM materials
+                  setInfillDensity(25);
+                  setIsSolid(false);
+                }
+                handleSettingsChange();
+              }}
               className="w-full bg-[#EFEFEF] px-2 py-1 rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] appearance-none cursor-pointer leading-[25.2px] pr-7"
             >
               <option>PLA</option>
@@ -661,9 +652,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         {/* Infill Density - Expandable */}
         <div className={`px-4 py-4 border-b border-[#E6E6E6] flex flex-col gap-3 ${infillExpanded ? '' : ''}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <label className="text-[14px] font-medium text-[#7A7A7A] capitalize leading-[12px]">Infill Density</label>
-              <Image src="/images/icons/info.svg" alt="" width={12} height={12} />
+              <Tooltip content="Internal structure density. Higher infill means stronger and heavier parts. 100% creates a solid part with no hollow interior." />
             </div>
             <button
               onClick={() => setInfillExpanded(!infillExpanded)}
@@ -688,8 +679,8 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
               }}
             >
               {/* Infill Type Dropdown */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
                   Infill Type
                 </label>
                 <div className="relative">
@@ -718,38 +709,49 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
               </div>
 
               {/* Infill Density Slider */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
-                    Infill Density
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[12px] font-medium text-[#8D8D8D] tracking-[-0.2px] leading-[1.8]">
+                      Infill Density
+                    </label>
+                    <span className="text-[12px] font-medium text-[#F4008A] tracking-[-0.24px]">
+                      {infillDensity}%
+                    </span>
+                  </div>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isSolid}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setIsSolid(checked);
-                        if (checked) {
+                    <span className="text-[12px] font-medium text-[#1F1F1F] tracking-[-0.24px] leading-[1.8]">
+                      Solid
+                    </span>
+                    {/* Toggle Switch */}
+                    <div
+                      onClick={() => {
+                        const newSolid = !isSolid;
+                        setIsSolid(newSolid);
+                        if (newSolid) {
                           setInfillDensity(100);
                         } else {
                           setInfillDensity(25);
                         }
                         handleSettingsChange();
                       }}
-                      className="w-[10px] h-[10px] rounded-sm border border-[#B7B7B7] bg-transparent checked:bg-transparent checked:border-[#F4008A] cursor-pointer appearance-none relative transition-all
-                        before:content-['✓'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[#F4008A] before:text-[8px] before:font-bold before:opacity-0 checked:before:opacity-100"
-                    />
-                    <span className="text-[12px] font-medium text-[#1F1F1F] tracking-[-0.24px] leading-[1.8]">
-                      Solid
-                    </span>
+                      className={`relative w-[32px] h-[16px] rounded-full transition-all duration-300 ${
+                        isSolid ? 'bg-[#F4008A]' : 'bg-[#E6E6E6]'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-[2px] w-[12px] h-[12px] rounded-full bg-white transition-all duration-300 ${
+                          isSolid ? 'left-[18px]' : 'left-[2px]'
+                        }`}
+                      />
+                    </div>
                   </label>
                 </div>
                 <div className="flex justify-between text-[10px] font-light text-[#8D8D8D] tracking-[-0.2px]">
                   <span>Low</span>
                   <span>High</span>
                 </div>
-                <div className="relative h-6">
+                <div className="relative h-[33px]">
                   {/* Slider Track Background with Tick Marks */}
                   <div className="absolute inset-0 bg-[#EFEFEF] border-[0.5px] border-[#E6E6E6] rounded-[2px] px-6 flex items-center justify-between">
                     {[...Array(9)].map((_, i) => (
@@ -758,7 +760,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                         className="bg-[#D9D9D9]"
                         style={{
                           width: '1.5px',
-                          height: i % 2 === 0 ? '18px' : '12px'
+                          height: i % 2 === 0 ? '24px' : '16px'
                         }}
                       />
                     ))}
@@ -772,22 +774,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                       background: 'linear-gradient(to right, #F4008A 0%, #F76EB3 50%, #FE62BA 100%)'
                     }}
                   >
-                    {/* Percentage text - white, centered, follows drag */}
-                    {isSliderDragging && (
-                      <span 
-                        className="absolute text-[10px] font-medium text-white tracking-[-0.2px] whitespace-nowrap leading-none pointer-events-none"
-                        style={{ 
-                          right: '10px',
-                          animation: 'badgePop 0.35s ease-out forwards'
-                        }}
-                      >
-                        {infillDensity}%
-                      </span>
-                    )}
-                    
                     {/* Dark Pink Handle Indicator - at right edge of gradient */}
                     <div
-                      className="absolute right-0 top-1/2 -translate-y-1/2 w-[2px] h-[11px] bg-[#B40066] rounded-[2px]"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] bg-[#B40066] rounded-[2px]"
                       style={{ right: '4px' }}
                     />
                   </div>
@@ -804,11 +793,6 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                       setIsSolid(value === 100);
                       handleSettingsChange();
                     }}
-                    onMouseDown={() => setIsSliderDragging(true)}
-                    onMouseUp={() => setIsSliderDragging(false)}
-                    onMouseLeave={() => setIsSliderDragging(false)}
-                    onTouchStart={() => setIsSliderDragging(true)}
-                    onTouchEnd={() => setIsSliderDragging(false)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </div>
@@ -820,9 +804,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         {/* Reference - Expandable */}
         <div className={`px-4 py-4 border-b border-[#E6E6E6] flex flex-col gap-3`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <label className="text-[14px] font-medium text-[#7A7A7A] capitalize leading-[12px]">Reference</label>
-              <Image src="/images/icons/info.svg" alt="" width={12} height={12} />
+              <Tooltip content="Upload photos or PDFs showing desired colors, surface finishes, or assembly details to guide the print." />
             </div>
             <button
               onClick={() => setReferenceExpanded(!referenceExpanded)}
@@ -875,7 +859,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
                   <p className="text-[12px] text-[#8D8D8D]">
                     Drop images or <span className="text-[#F4008A] underline">browse</span>
                   </p>
-                  <p className="text-[10px] text-[#B0B0B0]">PNG, JPG, PDF supported</p>
+                  <p className="text-[12px] text-[#B0B0B0]">PNG, JPG, PDF supported</p>
                 </div>
               </div>
 
@@ -911,9 +895,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         {/* Instructions - Expandable */}
         <div className={`px-4 py-4 border-b border-[#E6E6E6] flex flex-col gap-3`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <label className="text-[14px] font-medium text-[#7A7A7A] capitalize leading-[12px]">Instructions</label>
-              <Image src="/images/icons/info.svg" alt="" width={12} height={12} />
+              <Tooltip content="Add special requests, notes, or specific requirements for your print job. Include details about surface finish, assembly, or any other special considerations." />
             </div>
             <button
               onClick={() => setInstructionsExpanded(!instructionsExpanded)}
@@ -955,18 +939,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
         {modelInfo && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between py-1">
-              <button
-                onClick={() => {
-                  const units: ('mm' | 'cm' | 'in')[] = ['mm', 'cm', 'in'];
-                  const currentIndex = units.indexOf(dimensionUnit);
-                  setDimensionUnit(units[(currentIndex + 1) % units.length]);
-                }}
-                className="text-[14px] text-[#8D8D8D] tracking-[0.28px] hover:text-[#1F1F1F] transition-colors"
-              >
-                Dimension (<span className="underline underline-offset-2">{dimensionUnit}</span>)
-              </button>
+              <span className="text-[14px] text-[#8D8D8D] tracking-[0.28px]">Dimension (mm)</span>
               <span className="text-[14px] text-[#8D8D8D]">
-                {convertDimension(modelInfo.dimensions.length)}L × {convertDimension(modelInfo.dimensions.width)}W × {convertDimension(modelInfo.dimensions.height)}H
+                {modelInfo.dimensions.length.toFixed(0)}L × {modelInfo.dimensions.width.toFixed(0)}W × {modelInfo.dimensions.height.toFixed(0)}H
               </span>
             </div>
             <div className="flex items-center justify-between py-1">
@@ -993,7 +968,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           <button
             onClick={hasUnsavedSettings ? () => handleSliceModel() : handleAddToBag}
             disabled={isSlicing || isUploading}
-            className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
+            className="w-[207px] px-6 py-2 rounded-[2px] text-[14px] font-medium tracking-[0.28px] leading-[1.37] transition-all hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed btn-bounce"
             style={{
               background: addedToBag
                 ? 'linear-gradient(to right, #22C55E 0%, #16A34A 100%)'
@@ -1004,7 +979,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
           >
             {isSlicing ? 'Slicing...' :
              addedToBag ? 'Added!' :
-             hasUnsavedSettings ? 'Re-slice Model' :
+             hasUnsavedSettings ? 'Re-slice model' :
              'Add to Bag'}
           </button>
 

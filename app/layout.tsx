@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Providers } from "@/components/providers/Providers";
+import CookieBanner from "@/components/layout/CookieBanner";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -29,6 +30,7 @@ export default function RootLayout({
             </main>
             <Footer />
           </div>
+          <CookieBanner />
         </Providers>
       </body>
     </html>

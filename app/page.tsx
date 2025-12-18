@@ -7,6 +7,7 @@ import FileUpload from "@/components/ui/FileUpload";
 import ConfiguratorSidebar, { ConfiguratorSidebarRef, ConfigState } from "@/components/configurator/ConfiguratorSidebar";
 import { ModelInfo, SlicerQuoteResponse } from '@/types';
 import { useDraftsStore, createDraftData } from '@/stores/useDraftsStore';
+import { useLandingStore } from '@/stores/useLandingStore';
 
 const ModelViewer = dynamic(() => import("@/components/viewer/ModelViewer"), {
   ssr: false,
@@ -32,33 +33,66 @@ export default function Home() {
   const [showDraftSaved, setShowDraftSaved] = useState(false);
   const [initialSliceResults, setInitialSliceResults] = useState<SlicerQuoteResponse | null>(null);
   const [initialFileId, setInitialFileId] = useState<string | null>(null);
+  const [showUploader, setShowUploader] = useState(false);
 
   const getDraft = useDraftsStore((state) => state.getDraft);
   const addDraft = useDraftsStore((state) => state.addDraft);
   const updateDraft = useDraftsStore((state) => state.updateDraft);
   const removeDraft = useDraftsStore((state) => state.removeDraft);
+  const setIsLandingPage = useLandingStore((state) => state.setIsLandingPage);
 
-  // Load draft from URL parameter OR handle reset
+  // Update landing page state based on current view
+  useEffect(() => {
+    const isLanding = !showUploader && !selectedFile;
+    setIsLandingPage(isLanding);
+  }, [showUploader, selectedFile, setIsLandingPage]);
+
+  // Load draft from URL parameter OR handle navigation
   useEffect(() => {
     const draftId = searchParams.get('draft');
-    const reset = searchParams.get('reset');
+    const uploader = searchParams.get('uploader');
+    const landing = searchParams.get('landing');
 
-    // Handle reset request (from clicking "3D" in header)
-    if (reset) {
-      console.log('🔄 Resetting to FileUpload modal');
+    // Handle landing request (from clicking Logo in header)
+    if (landing) {
+      console.log('🏠 Going to landing page');
 
       // Clean up old URL if it exists
       if (selectedFile?.url) {
         URL.revokeObjectURL(selectedFile.url);
       }
 
-      // Reset all state
+      // Reset all state to show landing page
       setSelectedFile(null);
       setModelInfo(null);
       setInitialConfig(undefined);
       setLoadedDraftId(null);
       setInitialSliceResults(null);
       setInitialFileId(null);
+      setShowUploader(false);
+
+      // Clear the URL parameter
+      router.replace('/', { scroll: false });
+      return;
+    }
+
+    // Handle uploader request (from clicking "3D" in header)
+    if (uploader) {
+      console.log('🔄 Opening uploader screen');
+
+      // Clean up old URL if it exists
+      if (selectedFile?.url) {
+        URL.revokeObjectURL(selectedFile.url);
+      }
+
+      // Reset file state but show uploader
+      setSelectedFile(null);
+      setModelInfo(null);
+      setInitialConfig(undefined);
+      setLoadedDraftId(null);
+      setInitialSliceResults(null);
+      setInitialFileId(null);
+      setShowUploader(true);
 
       // Clear the URL parameter
       router.replace('/', { scroll: false });
@@ -72,6 +106,7 @@ export default function Home() {
         setLoadedDraftId(draftId);
         setInitialConfig(draft.config);
         setModelInfo(draft.modelInfo);
+        setShowUploader(true);
 
         // Set file info (without actual file for now - just display name)
         setSelectedFile({
@@ -140,8 +175,11 @@ export default function Home() {
     setTimeout(() => setShowDraftSaved(false), 2000);
   };
 
+  // Check if we're on the landing page (for full-screen video)
+  const isOnLandingPage = !showUploader && !selectedFile;
+
   return (
-    <div className="relative w-full h-[calc(100vh-56px)]">
+    <div className={`relative w-full ${isOnLandingPage ? 'h-screen -mt-[56px] bg-black' : 'h-[calc(100vh-56px)]'}`}>
       {/* Draft Saved Toast */}
       {showDraftSaved && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1F1F1F] text-white px-6 py-3 rounded-[2px] shadow-lg animate-fade-in">
@@ -154,8 +192,53 @@ export default function Home() {
         </div>
       )}
 
-      {!selectedFile ? (
-        /* Upload State - Full screen viewer with centered upload card */
+      {!showUploader && !selectedFile ? (
+        /* Hero Landing Page - Full screen video */
+        <>
+          {/* Video Background */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src="/videos/Video.mp4" type="video/mp4" />
+            </video>
+            {/* Dark overlay for better text readability */}
+            <div className="absolute inset-0 bg-black/50" />
+          </div>
+
+          {/* Hero Content */}
+          <div className="absolute top-[56px] bottom-[67px] left-0 right-0 z-10 flex items-center justify-center pt-12">
+            <div className="w-full max-w-[1440px] mx-auto px-[115px]">
+              <div className="flex justify-between items-start">
+                <span className="text-[36px] sm:text-[48px] font-medium text-white leading-[1.1] tracking-[-0.02em]">
+                  See Your Ideas
+                </span>
+                <div className="text-center flex-1 px-8">
+                  <p className="text-[15px] sm:text-[17px] text-white mb-3 leading-[1.3]">
+                    From prototypes to custom parts,<br />upload your 3D files and print high-quality 3D parts.
+                  </p>
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={() => setShowUploader(true)}
+                    className="px-6 py-2 bg-white/20 text-white text-[14px] font-normal tracking-[0.28px] rounded-[2px] hover:bg-white/40 transition-all"
+                  >
+                    Get an Instant Quote
+                  </button>
+                </div>
+                <span className="text-[36px] sm:text-[48px] font-medium text-white leading-[1.1] tracking-[-0.02em]">
+                  Live in 3D!!!
+                </span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : !selectedFile ? (
+        /* 3D Upload Screen - FileUpload modal */
         <>
           <div className="absolute inset-0 z-0">
             <ModelViewer

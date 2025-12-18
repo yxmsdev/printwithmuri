@@ -166,14 +166,14 @@ export default function OrderConfirmationPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href={order ? `/orders/${order.id}` : '/orders'}
-            className="rounded-[2px] flex-1 py-3 px-6 text-[14px] font-medium text-white uppercase tracking-[0.28px] text-center transition-all hover:opacity-90"
+            className="rounded-[2px] flex-1 py-[8px] px-8 text-[14px] font-medium text-white tracking-[0.28px] text-center transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)' }}
           >
             Track Order
           </Link>
           <Link
             href="/"
-            className="rounded-[2px] flex-1 py-3 px-6 text-[14px] font-medium text-[#1F1F1F] uppercase tracking-[0.28px] text-center border border-[#1F1F1F] hover:bg-[#1F1F1F] hover:text-white transition-all"
+            className="rounded-[2px] flex-1 py-[8px] px-8 text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] text-center border border-[#1F1F1F] hover:bg-[#1F1F1F] hover:text-white transition-all"
           >
             Continue Shopping
           </Link>

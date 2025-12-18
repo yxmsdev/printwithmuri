@@ -44,9 +44,10 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError('');
 
-    // Validation
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Validation - requires 8+ chars, uppercase, lowercase, and number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError('Password must be at least 8 characters with uppercase, lowercase, and a number');
       return;
     }
 
@@ -118,7 +119,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/auth/forgot-password"
-            className="rounded-[2px] inline-block px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+            className="rounded-[2px] inline-block px-8 py-[8px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90"
             style={{
               background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
             }}
@@ -146,7 +147,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/auth/login"
-            className="rounded-[2px] inline-block px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+            className="rounded-[2px] inline-block px-8 py-[8px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90"
             style={{
               background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
             }}
@@ -233,7 +234,7 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="text-white text-[14px] font-medium uppercase tracking-[0.28px] px-[24px] py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
+              className="text-white text-[14px] font-medium tracking-[0.28px] px-8 py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
               style={{
                 background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
               }}

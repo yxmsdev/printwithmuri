@@ -58,7 +58,7 @@ export default function NewsletterSection() {
   if (showSuccess) {
     return (
       <div className="bg-white py-12">
-        <div className="max-w-[1344px] mx-auto px-6">
+        <div className="container mx-auto px-[115px] max-w-[1440px]">
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-4">
               <svg
@@ -89,7 +89,7 @@ export default function NewsletterSection() {
 
   return (
     <div className="bg-white py-12">
-      <div className="max-w-[1344px] mx-auto px-6">
+      <div className="container mx-auto px-[115px] max-w-[1440px]">
         <div className="flex items-start justify-between gap-12">
           {/* Left Side - Heading */}
           <div className="flex flex-col gap-[10px] w-[552px]">
@@ -140,9 +140,12 @@ export default function NewsletterSection() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-black text-white text-[14px] font-medium uppercase tracking-[0.28px] px-[24px] py-[12px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-fit"
+                className="text-white text-[14px] font-medium tracking-[0.28px] px-8 py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
+                style={{
+                  background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
+                }}
               >
-                {isLoading ? 'SUBSCRIBING...' : 'SUBSCRIBE!'}
+                {isLoading ? 'Subscribing...' : 'Subscribe'}
               </button>
 
               {/* Error Message */}

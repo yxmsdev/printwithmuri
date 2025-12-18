@@ -1,9 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPin, generateResetToken } from '@/lib/pin-utils';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 10 requests per 15 minutes (strict for PIN verification)
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(`verify-pin:${clientId}`, RATE_LIMITS.AUTH);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Too many attempts. Please try again in ${Math.ceil(rateLimit.resetIn / 60)} minutes.` },
+        { status: 429 }
+      );
+    }
+
     const { email, pin } = await request.json();
 
     // Validate inputs

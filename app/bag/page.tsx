@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useBagStore } from '@/stores/useBagStore';
 
@@ -31,18 +32,14 @@ export default function BagPage() {
       <div className="container mx-auto px-6 py-16 max-w-[1440px]">
         <h1 className="text-[32px] font-medium text-[#1F1F1F] mb-12">Your Bag</h1>
         <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-24 h-24 bg-[#EDEDED] rounded-full flex items-center justify-center mb-6">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 01-8 0" />
-            </svg>
+          <div className="mb-6">
+            <Image src="/images/Bag_icon.svg" alt="Empty bag" width={80} height={80} />
           </div>
           <h2 className="text-[20px] font-medium text-[#1F1F1F] mb-2">Your bag is empty</h2>
           <p className="text-[14px] text-[#7A7A7A] mb-8">Upload a 3D model to get started</p>
           <Link
             href="/"
-            className="rounded-[2px] px-8 py-3 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+            className="rounded-[2px] px-8 py-[8px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90"
             style={{
               background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
             }}
@@ -202,7 +199,7 @@ export default function BagPage() {
 
             <button
               onClick={() => router.push('/checkout')}
-              className="rounded-[2px] w-full py-4 text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90"
+              className="rounded-[2px] w-full py-[8px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90"
               style={{
                 background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
               }}

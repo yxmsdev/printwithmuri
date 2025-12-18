@@ -19,6 +19,20 @@ export async function POST(request: NextRequest) {
   console.log(`${'='.repeat(80)}\n`);
 
   try {
+    // Verify user is authenticated
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.log(`[${requestId}] ❌ Unauthorized upload attempt`);
+      return NextResponse.json(
+        { error: 'Authentication required to upload files' },
+        { status: 401 }
+      );
+    }
+
+    console.log(`[${requestId}] ✅ User authenticated`);
+
     // Parse form data
     console.log(`[${requestId}] 📥 Parsing file upload...`);
     const formData = await request.formData();
@@ -78,9 +92,8 @@ export async function POST(request: NextRequest) {
     // Calculate expiration time
     const expiresAt = new Date(Date.now() + UPLOAD_TTL_HOURS * 60 * 60 * 1000);
 
-    // Store reference in Supabase
+    // Store reference in Supabase (reuse client from auth check)
     console.log(`[${requestId}] 💾 Storing file reference in database...`);
-    const supabase = await createClient();
     const { data, error } = await supabase
       .from('temp_uploads')
       .insert({

@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useDraftsStore } from '@/stores/useDraftsStore';
 import { useBagStore, createBagItem } from '@/stores/useBagStore';
 import { calculatePrice } from '@/lib/pricing';
+import Tooltip from '@/components/ui/Tooltip';
 
 export default function DraftsPage() {
   const drafts = useDraftsStore((state) => state.drafts);
@@ -110,16 +111,19 @@ export default function DraftsPage() {
   if (drafts.length === 0) {
     return (
       <div className="bg-white min-h-[calc(100vh-56px)]">
-        <div className="mx-auto px-[115px] pt-[64px] pb-0 max-w-[1440px]">
+        <div className="mx-auto px-4 sm:px-8 lg:px-[115px] pt-8 sm:pt-12 lg:pt-[64px] pb-0 max-w-[1440px]">
           {/* Header */}
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-4">
             <div className="flex flex-col gap-3">
-              <h1 className="text-[48px] font-semibold text-black leading-none">My Drafts</h1>
-              <p className="text-[16px] font-normal text-[#8D8D8D]">0 drafts saved</p>
+              <h1 className="text-[32px] sm:text-[40px] lg:text-[48px] font-semibold text-black leading-none">My Drafts</h1>
+              <div className="flex items-center gap-2">
+                <p className="text-[14px] sm:text-[16px] font-normal text-[#8D8D8D]">0 drafts saved</p>
+                <Tooltip content="Drafts are automatically deleted after 5 days of inactivity." />
+              </div>
             </div>
             <Link
               href="/"
-              className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
+              className="px-6 sm:px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce whitespace-nowrap"
               style={{
                 background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
               }}
@@ -129,13 +133,8 @@ export default function DraftsPage() {
           </div>
 
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-24 h-24 bg-[#F5F5F5] rounded-full flex items-center justify-center mb-6 shadow-sm">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="12" y1="18" x2="12" y2="12" />
-                <line x1="9" y1="15" x2="15" y2="15" />
-              </svg>
+            <div className="mb-6">
+              <Image src="/images/Drafts.svg" alt="No drafts" width={80} height={80} />
             </div>
             <h2 className="text-[20px] font-medium text-[#1F1F1F] mb-2">No drafts yet</h2>
             <p className="text-[14px] text-[#7A7A7A] mb-8 text-center max-w-md">
@@ -143,7 +142,7 @@ export default function DraftsPage() {
             </p>
             <Link
               href="/"
-              className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
+              className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
               style={{
                 background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
               }}
@@ -158,18 +157,21 @@ export default function DraftsPage() {
 
   return (
     <div className="bg-white min-h-[calc(100vh-56px)]">
-      <div className="mx-auto px-[115px] pt-[64px] pb-0 max-w-[1440px]">
+      <div className="mx-auto px-4 sm:px-8 lg:px-[115px] pt-8 sm:pt-12 lg:pt-[64px] pb-0 max-w-[1440px]">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-4">
           <div className="flex flex-col gap-3">
-            <h1 className="text-[48px] font-semibold text-black leading-none">My Drafts</h1>
-            <p className="text-[16px] font-normal text-[#8D8D8D]">
-              {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'} saved
-            </p>
+            <h1 className="text-[32px] sm:text-[40px] lg:text-[48px] font-semibold text-black leading-none">My Drafts</h1>
+            <div className="flex items-center gap-2">
+              <p className="text-[14px] sm:text-[16px] font-normal text-[#8D8D8D]">
+                {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'} saved
+              </p>
+              <Tooltip content="Drafts are automatically deleted after 5 days of inactivity." />
+            </div>
           </div>
           <Link
             href="/"
-            className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
+            className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce whitespace-nowrap"
             style={{
               background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
             }}
@@ -179,15 +181,15 @@ export default function DraftsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-[#b7b7b7] flex flex-col gap-[2px]">
+        <div className="bg-[#b7b7b7] flex flex-col gap-[2px] overflow-x-auto">
           {/* Table Header */}
-          <div className="bg-white px-0 py-[8px] flex items-center justify-center gap-[64px]">
-            <p className="w-[240px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Project</p>
-            <p className="w-[80px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Material</p>
-            <p className="w-[80px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Quantity</p>
-            <p className="w-[80px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Cost</p>
-            <p className="w-[120px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Date Created</p>
-            <p className="w-[144px] text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Action</p>
+          <div className="bg-white px-0 py-[8px] flex items-center justify-center gap-[64px] min-w-[800px]">
+            <p className="w-[240px] text-[14px] sm:text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Project</p>
+            <p className="w-[80px] text-[14px] sm:text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Material</p>
+            <p className="w-[80px] text-[14px] sm:text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Quantity</p>
+            <p className="w-[80px] text-[14px] sm:text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Cost</p>
+            <p className="w-[120px] text-[14px] sm:text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Date Created</p>
+            <p className="w-[144px] text-[14px] sm:text-[16px] font-semibold text-[#1F1F1F] leading-[1.4]">Action</p>
           </div>
 
           {/* Table Rows */}
@@ -195,7 +197,7 @@ export default function DraftsPage() {
             {drafts.map((draft) => (
               <div
                 key={draft.id}
-                className="bg-white px-[32px] py-[8px] flex items-center justify-center gap-[64px]"
+                className="bg-white px-4 sm:px-[32px] py-[8px] flex items-center justify-center gap-[64px] min-w-[800px]"
               >
                 {/* Project */}
                 <div className="w-[240px] flex items-center gap-3">
@@ -214,28 +216,28 @@ export default function DraftsPage() {
                       }}
                     />
                   </div>
-                  <p className="text-[16px] font-medium text-black truncate">
+                  <p className="text-[14px] sm:text-[16px] font-medium text-black truncate">
                     {draft.modelName}
                   </p>
                 </div>
 
                 {/* Material */}
-                <p className="w-[80px] text-[16px] text-black leading-[1.4]">
+                <p className="w-[80px] text-[14px] sm:text-[16px] text-black leading-[1.4]">
                   {draft.config.material}
                 </p>
 
                 {/* Quantity */}
-                <p className="w-[80px] text-[16px] text-black leading-[1.4]">
+                <p className="w-[80px] text-[14px] sm:text-[16px] text-black leading-[1.4]">
                   {draft.config.quantity}
                 </p>
 
                 {/* Cost */}
-                <p className="w-[80px] text-[14px] text-[#1F1F1F] uppercase tracking-[0.28px] leading-[12px]">
+                <p className="w-[80px] text-[12px] sm:text-[14px] text-[#1F1F1F] tracking-[0.28px] leading-[12px]">
                   ₦{getPrice(draft).toLocaleString()}
                 </p>
 
                 {/* Date Created */}
-                <p className="w-[120px] text-[14px] text-[#1F1F1F] tracking-[0.28px] leading-[12px]">
+                <p className="w-[120px] text-[12px] sm:text-[14px] text-[#1F1F1F] tracking-[0.28px] leading-[12px]">
                   {formatDate(draft.createdAt)}
                 </p>
 
@@ -243,12 +245,17 @@ export default function DraftsPage() {
                 <div className="w-[144px] flex items-center gap-3 relative">
                   <Link
                     href={`/?draft=${draft.id}`}
-                    className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] border border-[#464750] transition-all hover:text-white hover:border-transparent btn-bounce"
+                    className="px-[24px] py-[8px] rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] transition-all hover:text-white btn-bounce"
+                    style={{
+                      boxShadow: 'inset 0 0 0 1px #B7B7B7',
+                    }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = 'linear-gradient(180deg, #464750 0%, #000000 100%)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = '';
+                      e.currentTarget.style.boxShadow = 'inset 0 0 0 1px #B7B7B7';
                     }}
                   >
                     Resume

@@ -215,9 +215,6 @@ export default function ProfilePage() {
           <div className={`${userType === 'business' ? 'w-[939px]' : 'w-[703px]'} mt-[56px] mb-[120px] flex flex-col gap-[48px]`}>
             {/* Page Title Section */}
             <div className="flex flex-col gap-[4px]">
-              <p className="text-[14px] font-medium leading-none text-black tracking-[0.28px]">
-                My Profile
-              </p>
               <div className="flex items-start justify-between w-full">
                 <h1 className="font-semibold text-[32px] leading-none text-black">
                   {activeTab === 'personal' ? 'Edit Profile' : 'Edit Delivery Details'}
@@ -241,6 +238,12 @@ export default function ProfilePage() {
                   </button>
                 )}
               </div>
+              {/* Success Message - Shown under button */}
+              {activeTab === 'personal' && message && (
+                <p className="text-[12px] text-green-600 mt-2">
+                  {message}
+                </p>
+              )}
             </div>
 
             {activeTab === 'personal' ? (
@@ -272,7 +275,7 @@ export default function ProfilePage() {
                         />
                       ) : (
                         <Image
-                          src={userType === 'business' ? '/images/Muri.svg' : '/images/Account profile.svg'}
+                          src={userType === 'business' ? '/images/Company_profile.svg' : '/images/Account profile.svg'}
                           alt={userType === 'business' ? 'Company Logo' : 'Profile'}
                           width={188}
                           height={188}
@@ -283,7 +286,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={handleImageClick}
-                      className="text-[10px] font-semibold text-[#8D8D8D] tracking-[-0.2px] leading-none text-left hover:text-[#F4008A] transition-colors cursor-pointer"
+                      className="text-[14px] font-semibold text-[#8D8D8D] tracking-[-0.2px] leading-none text-left hover:text-[#F4008A] transition-colors cursor-pointer"
                     >
                       {userType === 'business' ? 'Change Company Logo' : 'Change Profile Photo'}
                     </button>
@@ -393,7 +396,7 @@ export default function ProfilePage() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            placeholder="**************"
+                            placeholder="+234 XXX XXX XXXX"
                             disabled={!isEditMode}
                             className={`bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none focus:ring-1 focus:ring-[#F4008A] w-full rounded-[2px] ${isEditMode ? 'text-[#1F1F1F]' : 'text-[#8D8D8D] cursor-not-allowed'
                               }`}
@@ -497,7 +500,7 @@ export default function ProfilePage() {
                               name="instagram"
                               value={formData.instagram}
                               onChange={handleChange}
-                              placeholder="Eyiyemi.x"
+                              placeholder="printwithmuri"
                               disabled={!isEditMode}
                               className={`bg-transparent text-[14px] font-medium tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none flex-1 min-w-0 ${isEditMode ? 'text-[#1F1F1F]' : 'text-[#8D8D8D] cursor-not-allowed'
                                 }`}
@@ -511,15 +514,15 @@ export default function ProfilePage() {
                             TikTok
                           </label>
                           <div className="bg-[#EFEFEF] flex items-center gap-[8px] px-[8px] py-[8px] rounded-[2px]">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                              <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" stroke="#8D8D8D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" className="shrink-0">
+                              <path fill="#8D8D8D" d="M16.656 1.029c1.637-0.025 3.262-0.012 4.886-0.025 0.054 2.031 0.878 3.859 2.189 5.213l-0.002-0.002c1.411 1.271 3.247 2.095 5.271 2.235l0.028 0.002v5.036c-1.912-0.048-3.71-0.489-5.331-1.247l0.082 0.034c-0.784-0.377-1.447-0.764-2.077-1.196l0.052 0.034c-0.012 3.649 0.012 7.298-0.025 10.934-0.103 1.853-0.719 3.543-1.707 4.954l0.020-0.031c-1.652 2.366-4.328 3.919-7.371 4.011l-0.014 0c-0.123 0.006-0.268 0.009-0.414 0.009-1.73 0-3.347-0.482-4.725-1.319l0.040 0.023c-2.508-1.509-4.238-4.091-4.558-7.094l-0.004-0.041c-0.025-0.625-0.037-1.25-0.012-1.862 0.49-4.779 4.494-8.476 9.361-8.476 0.547 0 1.083 0.047 1.604 0.136l-0.056-0.008c0.025 1.849-0.050 3.699-0.050 5.548-0.423-0.153-0.911-0.242-1.42-0.242-1.868 0-3.457 1.194-4.045 2.861l-0.009 0.030c-0.133 0.427-0.21 0.918-0.21 1.426 0 0.206 0.013 0.41 0.037 0.61l-0.002-0.024c0.332 2.046 2.086 3.59 4.201 3.59 0.061 0 0.121-0.001 0.181-0.004l-0.009 0c1.463-0.044 2.733-0.831 3.451-1.994l0.010-0.018c0.267-0.372 0.45-0.822 0.511-1.311l0.001-0.014c0.125-2.237 0.075-4.461 0.087-6.698 0.012-5.036-0.012-10.060 0.025-15.083z"/>
                             </svg>
                             <input
                               type="text"
                               name="tiktok"
                               value={formData.tiktok}
                               onChange={handleChange}
-                              placeholder="Eyiyemi_x"
+                              placeholder="printwithmuri"
                               disabled={!isEditMode}
                               className={`bg-transparent text-[14px] font-medium tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none flex-1 min-w-0 ${isEditMode ? 'text-[#1F1F1F]' : 'text-[#8D8D8D] cursor-not-allowed'
                                 }`}
@@ -533,16 +536,15 @@ export default function ProfilePage() {
                             LinkedIn
                           </label>
                           <div className="bg-[#EFEFEF] flex items-center gap-[8px] px-[8px] py-[8px] rounded-[2px]">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                              <rect x="2" y="2" width="20" height="20" rx="2" stroke="#8D8D8D" strokeWidth="1.5" />
-                              <path d="M7 10v7M7 7v.01M11 17v-4a2 2 0 1 1 4 0v4M11 10v7" stroke="#8D8D8D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg width="20" height="20" viewBox="0 0 382 382" fill="none" className="shrink-0">
+                              <path fill="#8D8D8D" d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889 C366.529,382,382,366.529,382,347.444V34.555C382,15.471,366.529,0,347.445,0z M118.207,329.844c0,5.554-4.502,10.056-10.056,10.056 H65.345c-5.554,0-10.056-4.502-10.056-10.056V150.403c0-5.554,4.502-10.056,10.056-10.056h42.806 c5.554,0,10.056,4.502,10.056,10.056V329.844z M86.748,123.432c-22.459,0-40.666-18.207-40.666-40.666S64.289,42.1,86.748,42.1 s40.666,18.207,40.666,40.666S109.208,123.432,86.748,123.432z M341.91,330.654c0,5.106-4.14,9.246-9.246,9.246H286.73 c-5.106,0-9.246-4.14-9.246-9.246v-84.168c0-12.556,3.683-55.021-32.813-55.021c-28.309,0-34.051,29.066-35.204,42.11v97.079 c0,5.106-4.139,9.246-9.246,9.246h-44.426c-5.106,0-9.246-4.14-9.246-9.246V149.593c0-5.106,4.14-9.246,9.246-9.246h44.426 c5.106,0,9.246,4.14,9.246,9.246v15.655c10.497-15.753,26.097-27.912,59.312-27.912c73.552,0,73.131,68.716,73.131,106.472 L341.91,330.654L341.91,330.654z"/>
                             </svg>
                             <input
                               type="text"
                               name="linkedin"
                               value={formData.linkedin}
                               onChange={handleChange}
-                              placeholder={userType === 'business' ? 'Eyiyemi Adegbite' : 'Eyiyemi Ad.....'}
+                              placeholder="printwithmuri"
                               disabled={!isEditMode}
                               className={`bg-transparent text-[14px] font-medium tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none flex-1 min-w-0 ${isEditMode ? 'text-[#1F1F1F]' : 'text-[#8D8D8D] cursor-not-allowed'
                                 }`}
@@ -564,7 +566,7 @@ export default function ProfilePage() {
                               name="twitter"
                               value={formData.twitter}
                               onChange={handleChange}
-                              placeholder="Eyiyemi_x"
+                              placeholder="printwithmuri"
                               disabled={!isEditMode}
                               className={`bg-transparent text-[14px] font-medium tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none flex-1 min-w-0 ${isEditMode ? 'text-[#1F1F1F]' : 'text-[#8D8D8D] cursor-not-allowed'
                                 }`}
@@ -619,14 +621,6 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
-
-                {/* Message */}
-
-                {message && (
-                  <p className="text-sm text-green-600">
-                    {message}
-                  </p>
-                )}
               </form>
             ) : (
               /* Delivery Details Tab */

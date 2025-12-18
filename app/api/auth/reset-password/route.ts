@@ -2,9 +2,21 @@ import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyResetToken } from '@/lib/pin-utils';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 5 requests per minute
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(`reset-password:${clientId}`, RATE_LIMITS.STRICT);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Too many requests. Please try again in ${rateLimit.resetIn} seconds.` },
+        { status: 429 }
+      );
+    }
+
     const { email, password, resetToken } = await request.json();
 
     // Validate inputs
@@ -16,9 +28,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate password strength
-    if (password.length < 6) {
+    // Requires: 8+ chars, uppercase, lowercase, and number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
+        { error: 'Password must be at least 8 characters with uppercase, lowercase, and a number' },
         { status: 400 }
       );
     }

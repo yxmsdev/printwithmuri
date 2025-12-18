@@ -4,6 +4,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { useProfileImageStore } from '@/stores/useProfileImageStore';
 
 interface AuthContextType {
   user: User | null;
@@ -42,7 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+      } else {
+        setUser(null);
+        // Clear profile image when user becomes null
+        useProfileImageStore.getState().clearProfileImage();
+      }
       setLoading(false);
     });
 
@@ -127,6 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    // Clear profile image from localStorage before signing out
+    useProfileImageStore.getState().clearProfileImage();
+
     await supabase.auth.signOut();
   };
 

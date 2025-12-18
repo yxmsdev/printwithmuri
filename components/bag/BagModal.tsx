@@ -44,18 +44,14 @@ export default function BagModal({ onClose }: BagModalProps) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="w-20 h-20 bg-[#EDEDED] rounded-full flex items-center justify-center mb-4">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 01-8 0" />
-          </svg>
+        <div className="mb-4">
+          <Image src="/images/Bag_icon.svg" alt="Empty bag" width={80} height={80} />
         </div>
         <h2 className="text-[18px] font-medium text-[#1F1F1F] mb-2">Your bag is empty</h2>
         <p className="text-[14px] text-[#7A7A7A] mb-6">Upload a 3D model to get started</p>
         <button
           onClick={onClose}
-          className="px-6 py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
+          className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
           }}
@@ -181,7 +177,7 @@ export default function BagModal({ onClose }: BagModalProps) {
             onClose();
             router.push('/checkout');
           }}
-          className="w-full py-2 rounded-[2px] text-[14px] font-medium uppercase tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3 btn-bounce"
+          className="w-full py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 mb-3 btn-bounce"
           style={{
             background: 'linear-gradient(to right, #1F1F1F 0%, #3a3a3a 100%)'
           }}

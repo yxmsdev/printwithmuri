@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 30 requests per minute
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(`newsletter:${clientId}`, RATE_LIMITS.STANDARD);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Too many requests. Please try again in ${rateLimit.resetIn} seconds.` },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { firstName, lastName, email } = body;
 

@@ -1,12 +1,15 @@
 import crypto from 'crypto';
 
+// Secret key for signing reset tokens - MUST be set in production
+const RESET_TOKEN_SECRET = process.env.RESET_TOKEN_SECRET || 'development-secret-change-in-production';
+
 /**
- * Generate a random 6-digit PIN code
+ * Generate a random 6-digit PIN code using cryptographically secure randomness
  * @returns {string} A 6-digit PIN code
  */
 export function generatePin(): string {
-  // Generate a random number between 100000 and 999999
-  const pin = Math.floor(100000 + Math.random() * 900000);
+  // Use crypto.randomInt for cryptographically secure random numbers
+  const pin = crypto.randomInt(100000, 1000000);
   return pin.toString();
 }
 
@@ -40,31 +43,71 @@ export function getExpirationTime(minutes: number = 10): Date {
 }
 
 /**
- * Generate a secure reset token
+ * Create HMAC signature for data
+ * @param {string} data - Data to sign
+ * @returns {string} HMAC signature
+ */
+function createSignature(data: string): string {
+  return crypto.createHmac('sha256', RESET_TOKEN_SECRET).update(data).digest('hex');
+}
+
+/**
+ * Generate a secure, signed reset token
  * @param {string} email - User's email
- * @returns {string} Base64 encoded reset token
+ * @returns {string} Signed reset token (base64 encoded payload + signature)
  */
 export function generateResetToken(email: string): string {
   const payload = {
-    email,
+    email: email.toLowerCase().trim(),
     verified: true,
     timestamp: Date.now(),
     // Add random nonce to prevent token reuse
     nonce: crypto.randomBytes(16).toString('hex'),
   };
-  return Buffer.from(JSON.stringify(payload)).toString('base64');
+
+  const payloadString = JSON.stringify(payload);
+  const signature = createSignature(payloadString);
+
+  // Combine payload and signature
+  const token = {
+    payload: payloadString,
+    signature,
+  };
+
+  return Buffer.from(JSON.stringify(token)).toString('base64');
 }
 
 /**
- * Verify and decode a reset token
+ * Verify and decode a signed reset token
  * @param {string} token - The reset token to verify
  * @param {number} maxAgeMinutes - Maximum age of token in minutes (default: 60)
- * @returns {Object|null} Decoded payload or null if invalid
+ * @returns {Object|null} Decoded payload or null if invalid/tampered
  */
 export function verifyResetToken(token: string, maxAgeMinutes: number = 60): { email: string; timestamp: number } | null {
   try {
+    // Decode the token
     const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const payload = JSON.parse(decoded);
+    const tokenData = JSON.parse(decoded);
+
+    // Check token structure
+    if (!tokenData.payload || !tokenData.signature) {
+      return null;
+    }
+
+    // Verify signature - this prevents token forgery
+    const expectedSignature = createSignature(tokenData.payload);
+    const isValidSignature = crypto.timingSafeEqual(
+      Buffer.from(tokenData.signature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    );
+
+    if (!isValidSignature) {
+      console.warn('Reset token signature verification failed - possible forgery attempt');
+      return null;
+    }
+
+    // Parse the verified payload
+    const payload = JSON.parse(tokenData.payload);
 
     // Check if token has required fields
     if (!payload.email || !payload.timestamp || !payload.verified) {

@@ -48,11 +48,8 @@ export default function OrderDetailPage() {
       <div className="min-h-[calc(100vh-56px)] bg-white">
         <div className="container mx-auto px-6 py-12 max-w-[900px]">
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
+            <div className="mb-6">
+              <Image src="/images/No_Order.svg" alt="Order not found" width={80} height={80} />
             </div>
             <h2 className="text-[20px] font-medium text-[#1F1F1F] mb-2">Order not found</h2>
             <p className="text-[14px] text-[#7A7A7A] mb-8">This order doesn&apos;t exist or has been removed.</p>

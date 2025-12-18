@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useOrdersStore, orderStatusConfig } from '@/stores/useOrdersStore';
 
 export default function OrdersPage() {
@@ -27,7 +28,7 @@ export default function OrdersPage() {
             </div>
             <Link
               href="/"
-              className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
+              className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
               style={{
                 background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
               }}
@@ -37,12 +38,8 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-24 h-24 bg-[#F5F5F5] rounded-full flex items-center justify-center mb-6 shadow-sm">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B7B7B7" strokeWidth="1.5">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
+            <div className="mb-6">
+              <Image src="/images/No_Order.svg" alt="No orders" width={80} height={80} />
             </div>
             <h2 className="text-[20px] font-medium text-[#1F1F1F] mb-2">No orders yet</h2>
             <p className="text-[14px] text-[#7A7A7A] mb-8 text-center max-w-md">
@@ -50,7 +47,7 @@ export default function OrdersPage() {
             </p>
             <Link
               href="/"
-              className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
+              className="px-8 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
               style={{
                 background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
               }}
@@ -76,7 +73,7 @@ export default function OrdersPage() {
           </div>
           <Link
             href="/"
-            className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white uppercase transition-all hover:opacity-90 btn-bounce"
+            className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium tracking-[0.28px] text-white transition-all hover:opacity-90 btn-bounce"
             style={{
               background: 'linear-gradient(180deg, #464750 0%, #000000 100%)'
             }}
@@ -110,13 +107,13 @@ export default function OrdersPage() {
                 >
                   {/* Order ID */}
                   <div className="w-[200px] flex items-center gap-3">
-                    <div className="w-[48px] h-[48px] bg-[#FAFAFA] rounded-[2px] flex items-center justify-center flex-shrink-0">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4C4C4" strokeWidth="1.5">
-                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <path d="M16 10a4 4 0 01-8 0" />
-                      </svg>
-                    </div>
+                    <Image
+                      src="/images/Order_item.svg"
+                      alt="Order"
+                      width={24}
+                      height={24}
+                      className="flex-shrink-0"
+                    />
                     <p className="text-[14px] font-medium text-black truncate">
                       {order.orderNumber}
                     </p>
@@ -128,7 +125,7 @@ export default function OrdersPage() {
                   </p>
 
                   {/* Total */}
-                  <p className="w-[80px] text-[14px] text-[#1F1F1F] uppercase tracking-[0.28px] leading-[12px] text-center">
+                  <p className="w-[80px] text-[14px] text-[#1F1F1F] tracking-[0.28px] leading-[12px] text-center">
                     ₦{order.total.toLocaleString()}
                   </p>
 
@@ -154,12 +151,17 @@ export default function OrdersPage() {
                   <div className="w-[144px] flex items-center justify-center">
                     <Link
                       href={`/orders/${order.id}`}
-                      className="px-6 py-[8px] rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] border border-[#464750] transition-all hover:text-white hover:border-transparent btn-bounce"
+                      className="px-[24px] py-[8px] rounded-[2px] text-[14px] font-medium text-[#1F1F1F] tracking-[0.28px] transition-all hover:text-white btn-bounce"
+                      style={{
+                        boxShadow: 'inset 0 0 0 1px #B7B7B7',
+                      }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'linear-gradient(180deg, #464750 0%, #000000 100%)';
+                        e.currentTarget.style.boxShadow = 'none';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = '';
+                        e.currentTarget.style.boxShadow = 'inset 0 0 0 1px #B7B7B7';
                       }}
                     >
                       View

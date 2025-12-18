@@ -375,7 +375,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           <div className="flex items-center justify-between">
             <button
               onClick={handleChangeModel}
-              className="text-[12px] font-medium text-[#1F1F1F] uppercase tracking-[0.24px] underline decoration-solid hover:text-[#F4008A] transition-colors btn-bounce"
+              className="text-[#1F1F1F] text-[14px] font-medium px-6 py-[8px] rounded-[2px] border border-[#E6E6E6] hover:bg-[#F6F6F6] transition-colors whitespace-nowrap btn-bounce"
             >
               Change model
             </button>
@@ -384,7 +384,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               onClick={handleContinue}
               disabled={!uploadComplete}
               className={`
-                px-6 py-2 rounded-[2px] text-[14px] font-medium text-white uppercase tracking-[0.28px]
+                px-6 py-[8px] rounded-[2px] text-[14px] font-medium text-white
                 transition-all duration-200 btn-bounce
                 ${uploadComplete
                   ? 'bg-gradient-to-b from-[#1F1F1F] to-[#3a3a3a] hover:opacity-90 cursor-pointer'

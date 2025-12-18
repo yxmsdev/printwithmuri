@@ -25,6 +25,10 @@ const MACHINE_COST_PER_HOUR = 2000; // ₦2000/hour
 // Setup fee per unique model
 const SETUP_FEE = 2500; // ₦2500
 
+// Minimum pricing
+const MINIMUM_WEIGHT = 10; // 10 grams
+const MINIMUM_PRICE = 7000; // ₦7,000 for anything ≤10g
+
 let isSlicing = false;
 const sliceQueue: {
   resolve: (value: any) => void;
@@ -68,6 +72,20 @@ async function handleSlicing(request: NextRequest) {
   console.log(`[${requestId}] ⏱️  Request received at ${new Date().toISOString()}`);
 
   try {
+    // Verify user is authenticated
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.log(`[${requestId}] ❌ Unauthorized slice attempt`);
+      return NextResponse.json(
+        { error: 'Authentication required to slice models' },
+        { status: 401 }
+      );
+    }
+
+    console.log(`[${requestId}] ✅ User authenticated`);
+
     // Cleanup old files before processing (async, don't wait)
     cleanupOldFiles(24).catch(err => console.error(`[${requestId}] Cleanup error:`, err));
 
@@ -100,8 +118,7 @@ async function handleSlicing(request: NextRequest) {
 
     console.log(`[${requestId}] 🔍 Looking up file with ID: ${fileId}`);
 
-    // Retrieve file information from database
-    const supabase = await createClient();
+    // Retrieve file information from database (reuse client from auth check)
     const { data: upload, error: dbError } = await supabase
       .from('temp_uploads')
       .select('*')
@@ -223,7 +240,9 @@ async function handleSlicing(request: NextRequest) {
 
     const materialCost = metrics.filamentWeightGrams * materialCostPerGram;
     const machineCost = metrics.printTimeHours * MACHINE_COST_PER_HOUR;
-    const itemTotal = materialCost + machineCost + SETUP_FEE;
+    const calculatedTotal = materialCost + machineCost + SETUP_FEE;
+    // Apply minimum price of ₦7,000 for prints ≤10g
+    const itemTotal = metrics.filamentWeightGrams <= MINIMUM_WEIGHT ? Math.max(calculatedTotal, MINIMUM_PRICE) : calculatedTotal;
 
     // Generate quote ID
     const timestamp = Date.now();

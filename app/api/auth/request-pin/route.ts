@@ -2,9 +2,21 @@ import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePin, hashPin, getExpirationTime } from '@/lib/pin-utils';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 5 requests per minute
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(`request-pin:${clientId}`, RATE_LIMITS.STRICT);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Too many requests. Please try again in ${rateLimit.resetIn} seconds.` },
+        { status: 429 }
+      );
+    }
+
     const { email } = await request.json();
 
     // Validate email format
@@ -85,7 +97,7 @@ export async function POST(request: NextRequest) {
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
     const fromName = process.env.RESEND_FROM_NAME || 'Print with Muri';
 
-    console.log(`Sending PIN email to ${normalizedEmail} from ${fromName} <${fromEmail}>`);
+    console.log(`Sending PIN email from ${fromName} <${fromEmail}>`);
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -192,7 +204,7 @@ export async function POST(request: NextRequest) {
       throw new Error(errorData?.message || 'Failed to send email');
     }
 
-    console.log('PIN email sent successfully to:', normalizedEmail);
+    console.log('PIN email sent successfully');
 
     return NextResponse.json(
       {

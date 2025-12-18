@@ -144,153 +144,153 @@ export default function SupportPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-6 py-12 max-w-5xl">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Support Center</h1>
-        <p className="text-lg text-[#7A7A7A] mb-8">
-          Find answers to common questions or get in touch with our team
-        </p>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Support Center</h1>
+          <p className="text-lg text-[#7A7A7A] mb-8">
+            Find answers to common questions or get in touch with our team
+          </p>
 
-        {/* Search */}
-        <div className="max-w-2xl mx-auto">
-          <input
-            type="text"
-            placeholder="Search for help..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-6 py-4 border border-[#E6E6E6] rounded-[2px] text-[16px] focus:outline-none focus:border-[#F4008A]"
-          />
+          {/* Search */}
+          <div className="max-w-2xl mx-auto">
+            <input
+              type="text"
+              placeholder="Search for help..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#EFEFEF] px-[8px] py-[8px] text-[14px] font-medium text-[#1F1F1F] tracking-[-0.28px] leading-[1.8] placeholder:text-[#8D8D8D] focus:outline-none focus:ring-1 focus:ring-[#F4008A] rounded-[2px]"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <Link
-          href="/contact"
-          className="bg-white border border-[#E6E6E6] p-6 rounded-[2px] hover:border-[#F4008A] transition-colors text-center group"
-        >
-          <div className="w-12 h-12 bg-[#F4008A] rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4007A] transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-              <polyline points="22,6 12,13 2,6" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Contact Us</h3>
-          <p className="text-sm text-[#7A7A7A]">Send us a message and we'll respond within 24 hours</p>
-        </Link>
-
-        <Link
-          href="/orders"
-          className="bg-white border border-[#E6E6E6] p-6 rounded-[2px] hover:border-[#F4008A] transition-colors text-center group"
-        >
-          <div className="w-12 h-12 bg-[#F4008A] rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4007A] transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <line x1="9" y1="9" x2="15" y2="9" />
-              <line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Track Orders</h3>
-          <p className="text-sm text-[#7A7A7A]">Check the status of your current orders</p>
-        </Link>
-
-        <Link
-          href="/"
-          className="bg-white border border-[#E6E6E6] p-6 rounded-[2px] hover:border-[#F4008A] transition-colors text-center group"
-        >
-          <div className="w-12 h-12 bg-[#F4008A] rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4007A] transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Start Printing</h3>
-          <p className="text-sm text-[#7A7A7A]">Upload a model and get an instant quote</p>
-        </Link>
-      </div>
-
-      {/* FAQ Sections */}
-      <div className="space-y-8">
-        <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
-
-        {filteredFAQ.length === 0 && searchQuery && (
-          <div className="text-center py-12">
-            <p className="text-[#7A7A7A] mb-4">No results found for "{searchQuery}"</p>
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-[#F4008A] hover:underline font-medium"
-            >
-              Clear search
-            </button>
-          </div>
-        )}
-
-        {filteredFAQ.map((category, categoryIndex) => (
-          <div key={categoryIndex} className="mb-8">
-            <h3 className="text-xl font-semibold mb-4 text-[#1F1F1F]">{category.title}</h3>
-            <div className="space-y-3">
-              {category.items.map((item, itemIndex) => {
-                const key = `${categoryIndex}-${itemIndex}`;
-                const isOpen = openIndex === key;
-
-                return (
-                  <div
-                    key={itemIndex}
-                    className="bg-white border border-[#E6E6E6] rounded-[2px] overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleFAQ(categoryIndex, itemIndex)}
-                      className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-[#F6F6F6] transition-colors"
-                    >
-                      <span className="font-medium text-[#1F1F1F] pr-4">{item.question}</span>
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className={`flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
-                          }`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-                    {isOpen && (
-                      <div className="px-6 pb-4 text-[#7A7A7A] border-t border-[#E6E6E6] pt-4">
-                        {item.answer}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Still Need Help */}
-      <div className="mt-12 bg-[#F6F6F6] p-8 rounded-[2px] text-center">
-        <h3 className="text-2xl font-semibold mb-4">Still Need Help?</h3>
-        <p className="text-[#7A7A7A] mb-6">
-          Can't find what you're looking for? Our team is here to help!
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Link
             href="/contact"
-            className="px-6 py-3 bg-[#F4008A] text-white rounded-[2px] font-medium hover:bg-[#D4007A] transition-colors"
+            className="bg-white border border-[#E6E6E6] p-6 rounded-[2px] hover:border-[#F4008A] transition-colors text-center group"
           >
-            Contact Support
+            <div className="w-12 h-12 bg-[#F4008A] rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4007A] transition-colors">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Contact Us</h3>
+            <p className="text-sm text-[#7A7A7A]">Send us a message and we'll respond within 24 hours</p>
           </Link>
-          <a
-            href="mailto:support@printwithmuri.com"
-            className="px-6 py-3 border border-[#E6E6E6] bg-white rounded-[2px] font-medium hover:border-[#F4008A] transition-colors"
+
+          <Link
+            href="/orders"
+            className="bg-white border border-[#E6E6E6] p-6 rounded-[2px] hover:border-[#F4008A] transition-colors text-center group"
           >
-            Email Us Directly
-          </a>
+            <div className="w-12 h-12 bg-[#F4008A] rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4007A] transition-colors">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="9" y1="9" x2="15" y2="9" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Track Orders</h3>
+            <p className="text-sm text-[#7A7A7A]">Check the status of your current orders</p>
+          </Link>
+
+          <Link
+            href="/"
+            className="bg-white border border-[#E6E6E6] p-6 rounded-[2px] hover:border-[#F4008A] transition-colors text-center group"
+          >
+            <div className="w-12 h-12 bg-[#F4008A] rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D4007A] transition-colors">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Start Printing</h3>
+            <p className="text-sm text-[#7A7A7A]">Upload a model and get an instant quote</p>
+          </Link>
         </div>
-      </div>
+
+        {/* FAQ Sections */}
+        <div className="space-y-8">
+          <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+
+          {filteredFAQ.length === 0 && searchQuery && (
+            <div className="text-center py-12">
+              <p className="text-[#7A7A7A] mb-4">No results found for "{searchQuery}"</p>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-[#F4008A] hover:underline font-medium"
+              >
+                Clear search
+              </button>
+            </div>
+          )}
+
+          {filteredFAQ.map((category, categoryIndex) => (
+            <div key={categoryIndex} className="mb-8">
+              <h3 className="text-xl font-semibold mb-4 text-[#1F1F1F]">{category.title}</h3>
+              <div className="space-y-3">
+                {category.items.map((item, itemIndex) => {
+                  const key = `${categoryIndex}-${itemIndex}`;
+                  const isOpen = openIndex === key;
+
+                  return (
+                    <div
+                      key={itemIndex}
+                      className="bg-white border border-[#E6E6E6] rounded-[2px] overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleFAQ(categoryIndex, itemIndex)}
+                        className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-[#F6F6F6] transition-colors"
+                      >
+                        <span className="font-medium text-[#1F1F1F] pr-4">{item.question}</span>
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className={`flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+                            }`}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                      {isOpen && (
+                        <div className="px-6 pb-4 text-[#7A7A7A] border-t border-[#E6E6E6] pt-4">
+                          {item.answer}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Still Need Help */}
+        <div className="mt-12 bg-[#F6F6F6] p-8 rounded-[2px] text-center">
+          <h3 className="text-2xl font-semibold mb-4">Still Need Help?</h3>
+          <p className="text-[#7A7A7A] mb-6">
+            Can't find what you're looking for? Our team is here to help!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/contact"
+              className="px-6 py-3 bg-[#F4008A] text-white rounded-[2px] font-medium hover:bg-[#D4007A] transition-colors"
+            >
+              Contact Support
+            </Link>
+            <a
+              href="mailto:support@printwithmuri.com"
+              className="px-6 py-3 border border-[#E6E6E6] bg-white rounded-[2px] font-medium hover:border-[#F4008A] transition-colors"
+            >
+              Email Us Directly
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

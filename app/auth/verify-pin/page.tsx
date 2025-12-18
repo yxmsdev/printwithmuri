@@ -245,7 +245,7 @@ export default function VerifyPinPage() {
             <button
               type="submit"
               disabled={loading || pin.join('').length !== 6}
-              className="text-white text-[14px] font-medium uppercase tracking-[0.28px] px-[24px] py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
+              className="text-white text-[14px] font-medium tracking-[0.28px] px-8 py-[8px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed w-full rounded-[2px]"
               style={{
                 background: 'linear-gradient(180deg, #464750 21.275%, #000000 100%)'
               }}
