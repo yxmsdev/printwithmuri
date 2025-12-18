@@ -7,7 +7,11 @@ import { Providers } from "@/components/providers/Providers";
 import CookieBanner from "@/components/layout/CookieBanner";
 
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "Print with Muri - On-Demand 3D Printing",
