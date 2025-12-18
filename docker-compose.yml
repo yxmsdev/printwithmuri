@@ -26,8 +26,6 @@ services:
     volumes:
       # Mount config directory for easier profile updates during development
       - ./config:/app/config:ro
-      # Mount temp directory for slicing files (optional, for debugging)
-      - slicing-temp:/tmp/slicing
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -35,6 +33,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-volumes:
-  slicing-temp:
