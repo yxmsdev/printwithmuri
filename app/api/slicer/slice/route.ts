@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { sliceModel, SlicerConfig, cleanupOldFiles } from '@/lib/prusaslicer';
 import { createClient } from '@/lib/supabase/server';
+import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 
 // Configure the API route to allow longer execution time
 export const maxDuration = 300; // 5 minutes
@@ -72,19 +73,22 @@ async function handleSlicing(request: NextRequest) {
   console.log(`[${requestId}] ⏱️  Request received at ${new Date().toISOString()}`);
 
   try {
-    // Verify user is authenticated
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Rate limit slicing to prevent abuse (stricter limit since slicing is expensive)
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(`slice:${clientId}`, { limit: 10, windowSeconds: 60 });
 
-    if (authError || !user) {
-      console.log(`[${requestId}] ❌ Unauthorized slice attempt`);
+    if (!rateLimit.success) {
+      console.log(`[${requestId}] ❌ Rate limited: ${clientId}`);
       return NextResponse.json(
-        { error: 'Authentication required to slice models' },
-        { status: 401 }
+        { error: 'Too many slice requests. Please try again later.' },
+        { status: 429 }
       );
     }
 
-    console.log(`[${requestId}] ✅ User authenticated`);
+    // Get Supabase client (needed for file lookup)
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log(`[${requestId}] ${user ? '✅ User authenticated' : '👤 Guest user'}`);
 
     // Cleanup old files before processing (async, don't wait)
     cleanupOldFiles(24).catch(err => console.error(`[${requestId}] Cleanup error:`, err));

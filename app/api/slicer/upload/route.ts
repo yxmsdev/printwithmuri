@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { createClient } from '@/lib/supabase/server';
 import { FileUploadResponse } from '@/types';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 const TEMP_DIR = process.env.SLICER_TEMP_DIR || '/tmp/slicing';
 const UPLOAD_TTL_HOURS = parseInt(process.env.UPLOAD_TTL_HOURS || '24', 10);
@@ -19,19 +20,22 @@ export async function POST(request: NextRequest) {
   console.log(`${'='.repeat(80)}\n`);
 
   try {
-    // Verify user is authenticated
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Rate limit uploads to prevent abuse
+    const clientId = getClientIdentifier(request);
+    const rateLimit = checkRateLimit(`upload:${clientId}`, RATE_LIMITS.STANDARD);
 
-    if (authError || !user) {
-      console.log(`[${requestId}] ❌ Unauthorized upload attempt`);
+    if (!rateLimit.success) {
+      console.log(`[${requestId}] ❌ Rate limited: ${clientId}`);
       return NextResponse.json(
-        { error: 'Authentication required to upload files' },
-        { status: 401 }
+        { error: 'Too many upload requests. Please try again later.' },
+        { status: 429 }
       );
     }
 
-    console.log(`[${requestId}] ✅ User authenticated`);
+    // Get Supabase client (needed for temp_uploads storage)
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log(`[${requestId}] ${user ? '✅ User authenticated' : '👤 Guest user'}`);
 
     // Parse form data
     console.log(`[${requestId}] 📥 Parsing file upload...`);

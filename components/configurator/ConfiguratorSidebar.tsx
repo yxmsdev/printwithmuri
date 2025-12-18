@@ -145,8 +145,9 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   }));
 
   // Manual slice function - called when user clicks "Slice Model" or "Re-slice Model"
+  // skipAuthCheck=true for initial auto-slice (free quote), false for manual re-slice
   const handleSliceModel = async (providedFileId?: string, skipAuthCheck?: boolean) => {
-    // Require authentication to re-slice model (skip check for auto-slice after upload)
+    // Require auth for manual re-slice (guests get one free quote on upload)
     if (!skipAuthCheck && !user) {
       router.push('/auth/signup?redirect=/');
       return;
@@ -276,7 +277,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
   };
 
   const handleChangeClick = () => {
-    // Require authentication to change model
+    // Require auth to change file (guests get one free quote on initial upload)
     if (!user) {
       router.push('/auth/signup?redirect=/');
       return;
@@ -413,7 +414,7 @@ const ConfiguratorSidebar = forwardRef<ConfiguratorSidebarRef, ConfiguratorSideb
       console.log('🎯 Starting Phase 2: Auto-slice with default settings');
 
       // Phase 2: Auto-slice with current settings (pass fileId directly to avoid race condition)
-      // Skip auth check for auto-slice after initial upload
+      // This is the free quote for guests - no auth check here
       await handleSliceModel(uploadData.fileId, true);
 
     } catch (err) {
