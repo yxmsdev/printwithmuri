@@ -4,7 +4,7 @@ import { useState } from 'react';
 import SwiperGallery from '@/components/ui/SwiperGallery';
 import Toast from '@/components/ui/Toast';
 
-export default function PaperPage() {
+export default function SignagePage() {
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -43,7 +43,7 @@ export default function PaperPage() {
         body: JSON.stringify({
           email: formData.email,
           name: formData.name,
-          source: 'paper_coming_soon',
+          source: 'signage_coming_soon',
         }),
       });
 
