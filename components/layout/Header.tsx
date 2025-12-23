@@ -139,10 +139,10 @@ const Header = () => {
           {/* Center: Logo */}
           <Link href="/" onClick={handleLogoClick} className="absolute left-1/2 -translate-x-1/2">
             <Image
-              src="/images/Muri_Beta.svg"
+              src="/images/muri-beta-logo.svg"
               alt="Print with Muri"
-              width={81}
-              height={33}
+              width={120}
+              height={32}
               priority
               className={useTransparentHeader ? 'brightness-125' : ''}
             />
